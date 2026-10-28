@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>小猪画画 · 像素握笔练习</title>
+<style>
+:root{--pk:#f8a5c2;--dk:#e0568f;--ink:#4a2a3c;--sky:#8fd3ff;--mud:#8b5a2b}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
+html,body{margin:0;height:100%}
+body{background:var(--sky);font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",system-ui,sans-serif;color:var(--ink);
+ display:flex;flex-direction:column;align-items:center;gap:8px;padding:calc(8px + env(safe-area-inset-top)) 8px calc(8px + env(safe-area-inset-bottom));overflow:hidden}
+#hud{width:min(96vw,calc((100vh - 130px)*.72));display:flex;justify-content:space-between;align-items:center;gap:8px}
+.chip{background:#fff;border:4px solid var(--ink);box-shadow:4px 4px 0 var(--ink);padding:4px 12px;font-weight:900;font-size:clamp(15px,4.2vw,22px)}
+#title{background:var(--dk);color:#fff;text-shadow:2px 2px 0 var(--ink)}
+#tip{width:min(96vw,calc((100vh - 130px)*.72));text-align:center;font-weight:800;font-size:clamp(16px,4.6vw,24px);min-height:1.4em}
+#box{position:relative;width:min(96vw,calc((100vh - 130px)*.72));border:6px solid var(--ink);box-shadow:6px 6px 0 var(--ink);background:#bfe8a0}
+canvas#c{display:block;width:100%;aspect-ratio:360/500;image-rendering:pixelated;touch-action:none;cursor:crosshair}
+#ov,#sel{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(74,42,60,.55);padding:14px}
+#ov[hidden],#sel[hidden]{display:none}
+.card{background:#fff6fa;border:5px solid var(--ink);box-shadow:6px 6px 0 var(--ink);padding:16px;text-align:center;max-width:320px}
+.card h1{margin:8px 0;font-size:26px;color:var(--dk);text-shadow:2px 2px 0 var(--ink)}
+.card p{margin:8px 0;font-weight:700;line-height:1.5}
+canvas#pp{width:104px;image-rendering:pixelated}
+canvas#pp.hop{animation:hop .5s steps(4) infinite}
+@keyframes hop{50%{transform:translateY(-14px)}}
+button{font:inherit;font-weight:900;font-size:22px;color:#fff;background:var(--dk);border:4px solid var(--ink);box-shadow:4px 4px 0 var(--ink);padding:8px 28px;cursor:pointer;margin-top:6px}
+button:active{transform:translate(4px,4px);box-shadow:none}
+button:focus-visible{outline:4px solid #ffd23f}
+@media (prefers-reduced-motion:reduce){canvas#pp.hop{animation:none}}
+#grid{display:grid;grid-template-columns:repeat(10,1fr);gap:3px;margin:6px 0}#grid b{border:2px solid var(--ink);background:#fff;font-size:11px;padding:5px 0;cursor:pointer}#grid b.on{background:var(--pk)}#grid b.cur{background:#ffd23f}
+#sel .card{max-width:none;width:100%;max-height:100%;overflow:auto;padding:10px}#sel h1{font-size:22px}
+</style>
+</head>
+<body>
+<div id="hud"><div class="chip" id="title">小猪画画</div><div class="chip" id="rd">第 1 关 ▾</div><div class="chip" id="st">★ 0</div></div>
+<div id="tip"></div>
+<div id="box">
+ <canvas id="c" width="360" height="500"></canvas>
+ <div id="ov"><div class="card">
+  <canvas id="pp"></canvas>
+  <h1 id="oh">小猪画画</h1>
+  <p id="op">用拇指、食指和中指轻轻捏住笔，像捏着一只小鸡，别捏太紧哦！</p>
+  <button id="ob">开始玩</button>
+ </div></div>
+ <div id="sel" hidden><div class="card"><h1>选关（粉色=已完成）</h1><div id="grid"></div><button id="sb">关闭</button></div></div>
+</div>
+<script>
+const C=document.getElementById('c'),X=C.getContext('2d'),W=360,H=500;
+const PAL={p:'#f8a5c2',d:'#e0568f',k:'#2b2b2b',w:'#ffffff',r:'#e63946',b:'#3a86ff',m:'#8b5a2b',y:'#ffd23f'};
+const SP={
+pig:["..dd.....dd..",".dppd...dppd.",".dpppppppppd.","dpppppppppppd","dppkpppppkppd","dppkpppppkppd","dpppdddddpppd","dpppdkdkdpppd","dpppdddddpppd",".dpppppppppd.","..ddddddddd..","...rrrrrrr...","..rrrrrrrrr.."],
+boot:["..bbb...","..bbb...","..bbb...","..bbb...","bbbbbbb.","bbbbbbbb","wwwwwwww"],
+mud:["..mmmmmm..",".mmmmmmmm.","mmmmmmmmmm",".mmmmmmmm."],
+star:["...y...","...y...","yyyyyyy",".yyyyy.","..yyy..",".yy.yy.","yy...yy"]};
+// 注意：第一行宽度修正为 13
+SP.pig[0]="..dd.....dd..".slice(0,13);
+function spr(ctx,n,cx,cy,s){const r=SP[n],w=r[0].length,h=r.length,x0=Math.round(cx-w*s/2),y0=Math.round(cy-h*s/2);
+ r.forEach((row,j)=>[...row].forEach((ch,i)=>{if(ch!=='.'){ctx.fillStyle=PAL[ch];ctx.fillRect(x0+i*s,y0+j*s,s,s)}}))}
+const d=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1]);
+function dense(pts,step=5){const o=[pts[0]];for(let i=1;i<pts.length;i++){const a=pts[i-1],b=pts[i],n=Math.max(1,Math.round(d(a,b)/step));for(let k=1;k<=n;k++)o.push([a[0]+(b[0]-a[0])*k/n,a[1]+(b[1]-a[1])*k/n])}return o}
+let AC;function beep(f=660,t=.12){try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();const o=AC.createOscillator(),g=AC.createGain();o.type='square';o.frequency.value=f;g.gain.value=.05;o.connect(g);g.connect(AC.destination);o.start();o.stop(AC.currentTime+t)}catch(e){}}
+
+/* ---------- 背景 ---------- */
+function bg(){for(let y=0;y<H;y+=20)for(let x=0;x<W;x+=20){X.fillStyle=((x+y)/20)%2?'#c9efa6':'#bfe8a0';X.fillRect(x,y,20,20)}}
+
+/* ---------- 描线关卡（支持多笔、数字点） ---------- */
+function mkTrace(S,dots,m){let s=0,P=dense(S[0],5);const dn=[];
+ return{on:false,i:0,
+ down(p){if(d(p,P[this.i])<42)this.on=true},
+ move(p){let b=-1;for(let j=this.i;j<Math.min(P.length,this.i+10);j++)if(d(p,P[j])<26)b=j;
+  if(b>this.i){this.i=b;if(b%6===0)beep(300+b*2,.04)}
+  if(this.i>=P.length-3){this.on=false;dn.push(P);if(s+1<S.length){beep(700,.1);P=dense(S[++s],5);this.i=0}else{this.i=P.length-1;win()}}},
+ up(){this.on=false},
+ draw(){X.lineCap=X.lineJoin='round';
+  const ln=(a,w,c,dash)=>{X.setLineDash(dash||[]);X.lineWidth=w;X.strokeStyle=c;X.beginPath();a.forEach((q,k)=>k?X.lineTo(q[0],q[1]):X.moveTo(q[0],q[1]));X.stroke();X.setLineDash([])};
+  S.forEach(q=>{ln(q,26,'rgba(255,255,255,.75)');ln(q,6,'#e0568f',[10,12])});
+  dn.forEach(q=>ln(q,14,'#e0568f'));ln(P.slice(0,this.i+1),14,'#e0568f');
+  if(m){const e=S[0][S[0].length-1];spr(X,'mud',e[0],e[1],3)}
+  (dots||[]).forEach(q=>{X.fillStyle='#fff';X.fillRect(q[0]-13,q[1]-13,26,26);X.strokeStyle='#4a2a3c';X.lineWidth=4;X.strokeRect(q[0]-13,q[1]-13,26,26);
+   X.fillStyle='#4a2a3c';X.font='900 18px sans-serif';X.textAlign='center';X.textBaseline='middle';X.fillText(q[2],q[0],q[1]+1)});
+  spr(X,'pig',P[this.i][0],P[this.i][1]-6,2)}}}
+const sm=a=>{for(let k=0;k<3;k++){const o=[a[0]];for(let i=0;i<a.length-1;i++){const p=a[i],q=a[i+1];o.push([.75*p[0]+.25*q[0],.75*p[1]+.25*q[1]],[.25*p[0]+.75*q[0],.25*p[1]+.75*q[1]])}o.push(a[a.length-1]);a=o}return a};
+function glyph(str){const S=str.split(' ').map(t=>{const sh=t[0]==='~',n=t.replace('~',''),p=[];for(let i=0;i<n.length;i+=2)p.push([58+n[i]*27,90+n[i+1]*36]);return sh?sm(p):p});
+ return mkTrace(S,S.length>1?S.map((q,k)=>[q[0][0],q[0][1],k+1]):0)}
+const circ=()=>{const p=[];for(let a=0;a<=64;a++){const t=a/64*Math.PI*2;p.push([180+100*Math.sin(t),250-100*Math.cos(t)])}return p};
+const zig=()=>[[45,110],[315,170],[45,230],[315,290],[45,350],[315,410]];
+const wave=()=>{const p=[];for(let x=30;x<=330;x+=6)p.push([x,250+95*Math.sin((x-30)/300*Math.PI*3)]);return p};
+const spiral=()=>{const p=[];for(let k=60;k>=0;k--){const t=k/60,a=t*Math.PI*4.5;p.push([180+(14+t*120)*Math.cos(a),250+(14+t*120)*Math.sin(a)])}return p};
+const poly=V=>mkTrace([V],V.slice(0,-1).map((q,k)=>[q[0],q[1],k+1]));
+const starD=()=>{const c=[0,1,2,3,4].map(k=>[180+115*Math.sin(k*Math.PI*2/5),260-115*Math.cos(k*Math.PI*2/5)]);return poly([0,2,4,1,3,0].map(k=>c[k]))};
+function rnd(n,lab){const o=[];for(let t=0;o.length<n&&t<999;t++){const q=[50+Math.random()*260|0,90+Math.random()*320|0];if(o.every(r=>d(r,q)>75))o.push(q)}
+ return mkTrace([o],o.map((q,k)=>[q[0],q[1],lab(k)]))}
+
+/* ---------- 迷宫（n 越大越难） ---------- */
+function mkMaze(n){const N=2*n+1,B=360/N,oy=70,g=Array.from({length:N},()=>Array(N).fill(1)),st=[[1,1]];g[1][1]=0;
+ while(st.length){const[c,r]=st[st.length-1],nb=[[2,0],[-2,0],[0,2],[0,-2]].filter(([a,b])=>{const x=c+a,y=r+b;return x>0&&y>0&&x<N-1&&y<N-1&&g[y][x]});
+  if(!nb.length){st.pop();continue}const[a,b]=nb[Math.random()*nb.length|0];g[r+b/2][c+a/2]=0;g[r+b][c+a]=0;st.push([c+a,r+b])}
+ const wall=(x,y)=>{const c=Math.floor(x/B),r=Math.floor((y-oy)/B);return c<0||r<0||c>=N||r>=N||g[r][c]};
+ const blocked=(x,y)=>[[-10,-10],[10,-10],[-10,10],[10,10]].some(([a,b])=>wall(x+a,y+b));
+ const goal=[(N-1.5)*B,oy+(N-1.5)*B],pg=[B*1.5,oy+B*1.5];
+ return{on:false,
+ down(p){if(d(p,pg)<45)this.on=true},
+ up(){this.on=false},
+ move(p){if(d(p,pg)>80){this.on=false;return}
+  const dx=p[0]-pg[0],dy=p[1]-pg[1],s=Math.max(1,Math.ceil(Math.hypot(dx,dy)/3));
+  for(let k=0;k<s;k++){const nx=pg[0]+dx/s,ny=pg[1]+dy/s;
+   if(!blocked(nx,ny)){pg[0]=nx;pg[1]=ny}else if(!blocked(nx,pg[1]))pg[0]=nx;else if(!blocked(pg[0],ny))pg[1]=ny}
+  if(d(pg,goal)<22)win()},
+ draw(){for(let r=0;r<N;r++)for(let c=0;c<N;c++){const x=c*B,y=oy+r*B;
+   if(g[r][c]){X.fillStyle='#a0693a';X.fillRect(x,y,B+1,B+1);X.fillStyle='#c48a52';X.fillRect(x,y,B+1,6);X.fillStyle='#7a4d27';X.fillRect(x,y+B-5,B+1,6)}
+   else{X.fillStyle=(r+c)%2?'#fbeccb':'#f6e2b8';X.fillRect(x,y,B+1,B+1)}}
+  spr(X,'mud',goal[0],goal[1],3);spr(X,'pig',pg[0],pg[1]-2,2)}}}
+
+/* ---------- 找朋友：图案 / 数量 / 大小写 / 数字与汉字 ---------- */
+function mkMatch(kind){const sh=a=>[...a].sort(()=>Math.random()-.5),ys=[130,250,370];
+ const sp=k=>(x,y)=>spr(X,k,x,y,k==='pig'?3:4),
+  tx=s=>(x,y)=>{X.fillStyle='#4a2a3c';X.font='900 38px sans-serif';X.textAlign='center';X.textBaseline='middle';X.fillText(s,x,y+2)},
+  cn=n=>(x,y)=>{X.fillStyle='#ffd23f';for(let k=0;k<n;k++)X.fillRect(x-25+k%3*18,y-25+(k/3|0)*18,13,13)};
+ let ids,A,B;
+ if(kind===0){ids=sh(['pig','boot','mud','star']).slice(0,3);A=B=sp}
+ else if(kind===1){ids=sh([1,2,3,4,5,6,7,8,9]).slice(0,3);A=tx;B=cn}
+ else if(kind===2){ids=sh([...'ABCDEFGHIJKLMNOPQRSTUVWXYZ']).slice(0,3);A=tx;B=s=>tx(s.toLowerCase())}
+ else{ids=sh([1,2,3,4,5,6,7,8,9,10]).slice(0,3);A=tx;B=n=>tx('一二三四五六七八九十'[n-1])}
+ const R=sh(ids),lf=ids.map((k,i)=>({k,x:80,y:ys[i],g:A(k)})),rt=R.map((k,i)=>({k,x:280,y:ys[i],g:B(k)})),lines=[];
+ return{on:false,s:null,p:[0,0],
+ down(p){const o=lf.find(o=>!o.done&&d(p,[o.x,o.y])<44);if(o){this.s=o;this.p=p;this.on=true}},
+ move(p){this.p=p},
+ up(p){if(this.s){const t=rt.find(o=>!o.done&&o.k===this.s.k&&d(p,[o.x,o.y])<46);
+   if(t){t.done=this.s.done=true;lines.push([this.s,t]);beep(880);if(lf.every(o=>o.done))win()}else beep(180,.15)}
+  this.s=null;this.on=false},
+ draw(){X.lineCap='round';
+  [...lf,...rt].forEach(o=>{X.fillStyle='#fff';X.fillRect(o.x-34,o.y-34,68,68);X.strokeStyle=o.done?'#e0568f':'#4a2a3c';X.lineWidth=5;X.strokeRect(o.x-34,o.y-34,68,68)});
+  X.lineWidth=10;X.strokeStyle='#e0568f';
+  lines.forEach(([a,b])=>{X.beginPath();X.moveTo(a.x,a.y);X.lineTo(b.x,b.y);X.stroke()});
+  if(this.s){X.setLineDash([10,10]);X.beginPath();X.moveTo(this.s.x,this.s.y);X.lineTo(this.p[0],this.p[1]);X.stroke();X.setLineDash([])}
+  [...lf,...rt].forEach(o=>o.g(o.x,o.y))}}}
+
+/* ---------- 100 关内容（笔画用 0-9 网格，两位数字=一个点 xy） ---------- */
+const DG=["~50121759979250","325059","~12307092841999","~11408183448597793918","69601696","~8020246395976918","~714023174988855426","109049","~542250825417599754","~5523407184784928"];
+const LT="095099 2676|1019 ~106082641475977919|~92602215286998|1019 ~106093966919|90101999 1575|901019 1575|~926022152869979555|1019 9099 1595|5059|~8087693917|1019 901599|101999|1910569099|19109990|~50131659969350|~191070927515|~50131659969350 6699|~191070927515 5599|~916021235485884918|1090 5059|~101639799690|105990|0029537990|1099 9019|105590 5559|10901999".split('|');
+const HZ=[['一','0595'],['二','2282 0797'],['三','2181 3575 0999'],['十','0595 5059'],['人','5019 4499'],['大','0393 5019 5399'],['小','5059 3417 7497'],['口','1118888111'],['日','1019898010 1585'],['山','14199994 5059'],['木','0393 5059 5319 5399'],['中','1317878313 5059'],['上','3039 3474 0999'],['王','1181 2575 0999 5159'],['田','1119898111 4149 1585']];
+const T=(n,t,f)=>({n,t,f}),AL=[...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'];
+const shapes=[T('画圈圈','沿着虚线，按住小猪画一个大圈圈',()=>mkTrace([circ()])),
+ T('之字线','从左到右，一笔画出之字',()=>mkTrace([zig()],0,1)),
+ T('波浪线','像小船一样沿着波浪划',()=>mkTrace([wave()],0,1)),
+ T('蜗牛圈','从外圈一圈圈画到中间',()=>mkTrace([spiral()],0,1)),
+ T('小房子','按数字顺序连成小房子',()=>poly([[100,370],[100,260],[180,160],[260,260],[260,370],[100,370]])),
+ T('五角星','按数字顺序一笔画出星星',starD),
+ T('三角形','按数字顺序连成三角形',()=>poly([[180,150],[60,370],[300,370],[180,150]])),
+ T('正方形','按数字顺序连成正方形',()=>poly([[90,160],[270,160],[270,360],[90,360],[90,160]])),
+ T('菱形','按数字顺序连成菱形',()=>poly([[180,130],[290,250],[180,380],[70,250],[180,130]]))];
+const digits=DG.map((g,i)=>T('数字 '+i,'描一描数字 '+i,()=>glyph(g)));
+const letters=LT.map((g,i)=>T('字母 '+AL[i],'描一描大写字母 '+AL[i],()=>glyph(g)));
+const hanzi=HZ.map(([c,g])=>T('汉字','描一描汉字「'+c+'」，注意笔画顺序',()=>glyph(g)));
+const mazes=[3,3,3,3,4,4,4,4,5,5,5,5].map(n=>T('走迷宫','按住小猪，走到泥坑里玩耍',()=>mkMaze(n)));
+const MT=['拖线连到一样的朋友','数字找对应数量的星星','大写字母找小写字母','阿拉伯数字找汉字数字'];
+const matches=Array.from({length:10},(_,k)=>T('找朋友',MT[k%4],()=>mkMatch(k%4)));
+const numdots=[3,4,5,5,6,6,7,8,9,10].map(n=>T('数字连点','从 1 开始，按数字顺序一个个连起来',()=>rnd(n,k=>k+1)));
+const letdots=[3,4,5,6,7,8,9,10].map(n=>T('字母连点','从 A 开始，按字母顺序一个个连起来',()=>rnd(n,k=>AL[k])));
+const LV=[];for(let r=0;LV.length<100;r++)[shapes,digits,mazes,numdots,matches,letters,letdots,hanzi].forEach(l=>{if(l[r])LV.push(l[r])});
+
+/* ---------- 流程与存档 ---------- */
+const $=id=>document.getElementById(id),ov=$('ov'),sel=$('sel'),pp=$('pp'),gr=$('grid');
+const ls={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+let cur=Math.min(+ls.get('pp_cur')||0,99),done=new Set(JSON.parse(ls.get('pp_done')||'[]')),L=null,lock=true,mode='start';
+const save=()=>{ls.set('pp_cur',cur);ls.set('pp_done',JSON.stringify([...done]))};
+pp.width=104;pp.height=104;spr(pp.getContext('2d'),'pig',52,52,8);
+function load(){const v=LV[cur];L=v.f();$('tip').textContent=v.t;$('title').textContent=v.n;$('rd').textContent='第 '+(cur+1)+' 关 ▾';$('st').textContent='★ '+done.size;lock=false}
+function win(){if(lock)return;lock=true;L.on=false;done.add(cur);save();beep(523,.1);setTimeout(()=>beep(784,.2),120);
+ $('st').textContent='★ '+done.size;const last=cur===99;mode=last?'end':'next';
+ $('oh').textContent=last?'100 关全部完成！':'太棒了！';
+ $('op').textContent=last?'小猪拿到了 '+done.size+' 颗星星，手指好灵活！':'第 '+(cur+1)+' 关完成，继续加油！';
+ $('ob').textContent=last?'从头再玩':'下一关';pp.classList.add('hop');setTimeout(()=>ov.hidden=false,350)}
+$('ob').textContent=cur?'继续第 '+(cur+1)+' 关':'开始玩';
+$('ob').onclick=()=>{ov.hidden=true;pp.classList.remove('hop');if(mode==='next')cur++;else if(mode==='end')cur=0;mode='play';save();load()};
+LV.forEach((_,k)=>{const b=document.createElement('b');b.textContent=k+1;b.onclick=()=>{cur=k;mode='play';sel.hidden=ov.hidden=true;pp.classList.remove('hop');save();load()};gr.appendChild(b)});
+$('rd').style.cursor='pointer';
+$('rd').onclick=()=>{[...gr.children].forEach((b,k)=>b.className=k===cur?'cur':done.has(k)?'on':'');sel.hidden=false};
+$('sb').onclick=()=>sel.hidden=true;
+$('st').textContent='★ '+done.size;
+function pos(e){const r=C.getBoundingClientRect();return[(e.clientX-r.left)*W/r.width,(e.clientY-r.top)*H/r.height]}
+C.addEventListener('pointerdown',e=>{if(!L||lock)return;C.setPointerCapture(e.pointerId);L.down(pos(e))});
+C.addEventListener('pointermove',e=>{if(L&&!lock&&L.on)L.move(pos(e))});
+['pointerup','pointercancel'].forEach(t=>C.addEventListener(t,e=>{if(L&&!lock)L.up(pos(e))}));
+function frame(){bg();if(L)L.draw();requestAnimationFrame(frame)}
+frame();
+</script>
+</body>
+</html>
