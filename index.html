@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-<title>小猪画画 · 像素握笔练习</title>
+<title>小猪画画 · 握笔 专注力 逻辑</title>
 <style>
 :root{--pk:#f8a5c2;--dk:#e0568f;--ink:#4a2a3c;--sky:#8fd3ff}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
@@ -64,8 +64,8 @@ function seeded(sd,f){const o=Math.random;Math.random=rngSeed(sd);try{return f()
 let ACT=['a_','b_','c_'].includes(ls.get('pp_phase'))?ls.get('pp_phase'):'a_';
 const TPL=(P,w,h,h1,intro,lk)=>`<div class="hud"><div class="chip title" id="${P}title">小猪画画</div><div class="chip" id="${P}rd">第 1 关 ▾</div><div class="chip rs" id="${P}rs">↻ 重来</div><div class="chip" id="${P}st">★ 0</div></div>${P!=='a_'?'<div class="rot">📱 把平板横过来玩更舒服</div>':''}<div class="tip" id="${P}tip"></div><div class="box"><canvas class="cv" id="${P}c" width="${w}" height="${h}"></canvas><div class="ov" id="${P}ov"><div class="card"><canvas class="pp" id="${P}pp"></canvas><h1 id="${P}oh">${h1}</h1><p id="${P}op">${intro}</p><button id="${P}ob">开始玩</button><p>${lk.map(([g,t])=>`<a href="#" data-go="${g}">${t}</a>`).join(' · ')}</p></div></div><div class="sel" id="${P}sel" hidden><div class="card"><h1>选关（粉色=已完成）</h1><div class="grid" id="${P}grid"></div><button id="${P}sb">关闭</button></div></div></div>`;
 document.getElementById('s1').innerHTML=TPL('a_',360,500,'阶段一：描线启蒙','用拇指、食指和中指轻轻捏住笔，像捏着一只小鸡，别捏太紧哦！',[['b_','去阶段二 →']]);
-document.getElementById('s2').innerHTML=TPL('b_',960,600,'阶段二：控笔与专注力','12 种题型 × 10 题，打乱顺序出现，越往后越复杂。握笔时手腕放松，慢慢来！',[['a_','← 阶段一'],['c_','去阶段三 →']]);
-document.getElementById('s3').innerHTML=TPL('c_',960,600,'阶段三：逻辑与思维','16 种题型 × 10 题，有拼图、找规律、数数、空间想象……打乱顺序出现，越往后越难。慢慢想，不着急！',[['b_','← 回到阶段二']]);
+document.getElementById('s2').innerHTML=TPL('b_',960,600,'阶段二：控笔与专注力','12 种题型打乱顺序出现，越往后越复杂。握笔时手腕放松，慢慢来！',[['a_','← 阶段一'],['c_','去阶段三 →']]);
+document.getElementById('s3').innerHTML=TPL('c_',960,600,'阶段三：逻辑与思维','16 种题型有拼图、找规律、数数、空间想象……打乱顺序出现，越往后越难。慢慢想，不着急！',[['b_','← 回到阶段二']]);
 function phase(p){ACT=p;ls.set('pp_phase',p);document.getElementById('s1').hidden=p!=='a_';document.getElementById('s2').hidden=p!=='b_';document.getElementById('s3').hidden=p!=='c_';document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on',b.dataset.p===p))}
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>phase(b.dataset.p));
 document.querySelectorAll('[data-go]').forEach(x=>x.onclick=e=>{e.preventDefault();phase(x.dataset.go)});
