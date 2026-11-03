@@ -13,12 +13,13 @@ body{background:var(--sky);font-family:"PingFang SC","Microsoft YaHei","Noto San
 button{font:inherit;font-weight:900;font-size:22px;color:#fff;background:var(--dk);border:4px solid var(--ink);box-shadow:4px 4px 0 var(--ink);padding:6px 26px;cursor:pointer;margin-top:6px}
 button:active{transform:translate(4px,4px);box-shadow:none}
 button:focus-visible{outline:4px solid #ffd23f}
+.rs{cursor:pointer;background:#ffd23f}
 .tab{font-size:clamp(14px,2.6vw,20px);padding:4px 14px;margin:0;background:#fff;color:var(--ink)}
 .tab.on{background:var(--dk);color:#fff;text-shadow:2px 2px 0 var(--ink)}
 section{display:flex;flex-direction:column;align-items:center;gap:6px;width:100%}
 section[hidden]{display:none}
 #s1{--w:min(96vw,calc((100vh - 176px)*.72))}
-#s2{--w:min(98vw,calc((100vh - 164px)*1.6))}
+#s2,#s3{--w:min(98vw,calc((100vh - 164px)*1.6))}
 .hud,.tip,.box{width:var(--w)}
 .hud{display:flex;justify-content:space-between;align-items:center;gap:8px}
 .chip{background:#fff;border:4px solid var(--ink);box-shadow:4px 4px 0 var(--ink);padding:3px 12px;font-weight:900;font-size:clamp(14px,2.4vw,22px)}
@@ -27,11 +28,11 @@ section[hidden]{display:none}
 .tip{text-align:center;font-weight:800;font-size:clamp(15px,2.6vw,24px);min-height:1.3em}
 #s1 .tip{font-size:clamp(16px,4.6vw,24px)}
 .rot{display:none;font-weight:900;color:#d64541}
-@media (orientation:portrait){#s2 .rot{display:block}}
+@media (orientation:portrait){#s2 .rot,#s3 .rot{display:block}}
 .box{position:relative;border:6px solid var(--ink);box-shadow:6px 6px 0 var(--ink);background:#bfe8a0}
 canvas.cv{display:block;width:100%;touch-action:none;cursor:crosshair}
 #s1 canvas.cv{aspect-ratio:360/500;image-rendering:pixelated}
-#s2 canvas.cv{aspect-ratio:960/600}
+#s2 canvas.cv,#s3 canvas.cv{aspect-ratio:960/600}
 .ov,.sel{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(74,42,60,.55);padding:12px}
 .ov[hidden],.sel[hidden]{display:none}
 .card{background:#fff6fa;border:5px solid var(--ink);box-shadow:6px 6px 0 var(--ink);padding:14px;text-align:center;max-width:340px}
@@ -42,7 +43,8 @@ canvas.pp{width:96px;image-rendering:pixelated}
 canvas.pp.hop{animation:hop .5s steps(4) infinite}
 @keyframes hop{50%{transform:translateY(-12px)}}
 .grid{display:grid;grid-template-columns:repeat(10,1fr);gap:3px;margin:6px 0}
-#s2 .grid{grid-template-columns:repeat(11,1fr)}
+#s2 .grid{grid-template-columns:repeat(12,1fr)}
+#s3 .grid{grid-template-columns:repeat(16,1fr)}
 .grid b{border:2px solid var(--ink);background:#fff;font-size:11px;padding:4px 0;cursor:pointer}
 .grid b.on{background:var(--pk)}.grid b.cur{background:#ffd23f}
 .sel .card{max-width:none;width:100%;max-height:100%;overflow:auto;padding:10px}.sel h1{font-size:20px}
@@ -50,17 +52,21 @@ canvas.pp.hop{animation:hop .5s steps(4) infinite}
 </style>
 </head>
 <body>
-<nav id="tabs"><button class="tab" data-p="a_">阶段一 · 描线启蒙</button><button class="tab" data-p="b_">阶段二 · 控笔与专注力</button></nav>
+<nav id="tabs"><button class="tab" data-p="a_">阶段一 · 描线启蒙</button><button class="tab" data-p="b_">阶段二 · 控笔与专注力</button><button class="tab" data-p="c_">阶段三 · 逻辑与思维</button></nav>
 <section id="s1"></section>
 <section id="s2" hidden></section>
+<section id="s3" hidden></section>
 <script>
 const ls={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
 let AC;function beep(f=660,t=.12){try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();const o=AC.createOscillator(),g=AC.createGain();o.type='square';o.frequency.value=f;g.gain.value=.05;o.connect(g);g.connect(AC.destination);o.start();o.stop(AC.currentTime+t)}catch(e){}}
-let ACT=ls.get('pp_phase')==='b_'?'b_':'a_';
-const TPL=(P,w,h,h1,intro,go,gt)=>`<div class="hud"><div class="chip title" id="${P}title">小猪画画</div><div class="chip" id="${P}rd">第 1 关 ▾</div><div class="chip" id="${P}st">★ 0</div></div>${P==='b_'?'<div class="rot">📱 把平板横过来玩更舒服</div>':''}<div class="tip" id="${P}tip"></div><div class="box"><canvas class="cv" id="${P}c" width="${w}" height="${h}"></canvas><div class="ov" id="${P}ov"><div class="card"><canvas class="pp" id="${P}pp"></canvas><h1 id="${P}oh">${h1}</h1><p id="${P}op">${intro}</p><button id="${P}ob">开始玩</button><p><a href="#" data-go="${go}">${gt}</a></p></div></div><div class="sel" id="${P}sel" hidden><div class="card"><h1>选关（粉色=已完成）</h1><div class="grid" id="${P}grid"></div><button id="${P}sb">关闭</button></div></div></div>`;
-document.getElementById('s1').innerHTML=TPL('a_',360,500,'阶段一：描线启蒙','用拇指、食指和中指轻轻捏住笔，像捏着一只小鸡，别捏太紧哦！','b_','去阶段二 →');
-document.getElementById('s2').innerHTML=TPL('b_',960,600,'阶段二：控笔与专注力','11 种题型 × 10 题，打乱顺序出现，越往后越复杂。握笔时手腕放松，慢慢来！','a_','← 回到阶段一');
-function phase(p){ACT=p;ls.set('pp_phase',p);document.getElementById('s1').hidden=p!=='a_';document.getElementById('s2').hidden=p!=='b_';document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on',b.dataset.p===p))}
+const rngSeed=s=>()=>{s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
+function seeded(sd,f){const o=Math.random;Math.random=rngSeed(sd);try{return f()}finally{Math.random=o}}
+let ACT=['a_','b_','c_'].includes(ls.get('pp_phase'))?ls.get('pp_phase'):'a_';
+const TPL=(P,w,h,h1,intro,lk)=>`<div class="hud"><div class="chip title" id="${P}title">小猪画画</div><div class="chip" id="${P}rd">第 1 关 ▾</div><div class="chip rs" id="${P}rs">↻ 重来</div><div class="chip" id="${P}st">★ 0</div></div>${P!=='a_'?'<div class="rot">📱 把平板横过来玩更舒服</div>':''}<div class="tip" id="${P}tip"></div><div class="box"><canvas class="cv" id="${P}c" width="${w}" height="${h}"></canvas><div class="ov" id="${P}ov"><div class="card"><canvas class="pp" id="${P}pp"></canvas><h1 id="${P}oh">${h1}</h1><p id="${P}op">${intro}</p><button id="${P}ob">开始玩</button><p>${lk.map(([g,t])=>`<a href="#" data-go="${g}">${t}</a>`).join(' · ')}</p></div></div><div class="sel" id="${P}sel" hidden><div class="card"><h1>选关（粉色=已完成）</h1><div class="grid" id="${P}grid"></div><button id="${P}sb">关闭</button></div></div></div>`;
+document.getElementById('s1').innerHTML=TPL('a_',360,500,'阶段一：描线启蒙','用拇指、食指和中指轻轻捏住笔，像捏着一只小鸡，别捏太紧哦！',[['b_','去阶段二 →']]);
+document.getElementById('s2').innerHTML=TPL('b_',960,600,'阶段二：控笔与专注力','12 种题型 × 10 题，打乱顺序出现，越往后越复杂。握笔时手腕放松，慢慢来！',[['a_','← 阶段一'],['c_','去阶段三 →']]);
+document.getElementById('s3').innerHTML=TPL('c_',960,600,'阶段三：逻辑与思维','16 种题型 × 10 题，有拼图、找规律、数数、空间想象……打乱顺序出现，越往后越难。慢慢想，不着急！',[['b_','← 回到阶段二']]);
+function phase(p){ACT=p;ls.set('pp_phase',p);document.getElementById('s1').hidden=p!=='a_';document.getElementById('s2').hidden=p!=='b_';document.getElementById('s3').hidden=p!=='c_';document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on',b.dataset.p===p))}
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>phase(b.dataset.p));
 document.querySelectorAll('[data-go]').forEach(x=>x.onclick=e=>{e.preventDefault();phase(x.dataset.go)});
 
@@ -186,7 +192,7 @@ const ls={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k
 let cur=Math.min(+ls.get('pp_cur')||0,99),done=new Set(JSON.parse(ls.get('pp_done')||'[]')),L=null,lock=true,mode='start';
 const save=()=>{ls.set('pp_cur',cur);ls.set('pp_done',JSON.stringify([...done]))};
 pp.width=104;pp.height=104;spr(pp.getContext('2d'),'pig',52,52,8);
-function load(){const v=LV[cur];L=v.f();$('tip').textContent=v.t;$('title').textContent=v.n;$('rd').textContent='第 '+(cur+1)+' 关 ▾';$('st').textContent='★ '+done.size;lock=false}
+let sd=0;function load(rt){const v=LV[cur];if(!rt)sd=Math.random()*1e9|0;L=seeded(sd,v.f);$('tip').textContent=v.t;$('title').textContent=v.n;$('rd').textContent='第 '+(cur+1)+' 关 ▾';$('st').textContent='★ '+done.size;lock=false}
 function win(){if(lock)return;lock=true;L.on=false;done.add(cur);save();beep(523,.1);setTimeout(()=>beep(784,.2),120);
  $('st').textContent='★ '+done.size;const last=cur===99;mode=last?'end':'next';
  $('oh').textContent=last?'100 关全部完成！':'太棒了！';
@@ -198,6 +204,7 @@ LV.forEach((_,k)=>{const b=document.createElement('b');b.textContent=k+1;b.oncli
 $('rd').style.cursor='pointer';
 $('rd').onclick=()=>{[...gr.children].forEach((b,k)=>b.className=k===cur?'cur':done.has(k)?'on':'');sel.hidden=false};
 $('sb').onclick=()=>sel.hidden=true;
+$('rs').onclick=()=>{if(!L)return;ov.hidden=sel.hidden=true;pp.classList.remove('hop');mode='play';load(true)};
 $('st').textContent='★ '+done.size;
 function pos(e){const r=C.getBoundingClientRect();return[(e.clientX-r.left)*W/r.width,(e.clientY-r.top)*H/r.height]}
 C.addEventListener('pointerdown',e=>{if(!L||lock)return;C.setPointerCapture(e.pointerId);L.down(pos(e))});
@@ -367,26 +374,55 @@ function mkPolar(i){const Rn=[3,3,3,4,4,4,5,5,6,6][i],r0=42,h=(268-r0)/Rn,CX=480
    else if(s!==ex){X.beginPath();X.arc(CX,CY,ro,s/n[r]*TP,a1);X.stroke()}}
   O(CX,CY,r0,'#c9efa6','#a0693a',7);spr(X,'mud',gx,gy,3);T('出口',gx,gy+34,22);spr(X,'pig',pg[0],pg[1]-2,2)}}}
 
-/* 9 字母找路 */
+/* 9 字母找路：只有一条路 */
+function chord(cn,rn,Ln){const key=(c,r)=>c+','+r,D4=[[1,0],[-1,0],[0,1],[0,-1]];let steps=0;
+ const go=(path,set)=>{if(path.length>=Ln)return path;if(++steps>20000)return null;const[c,r]=path[path.length-1];
+  for(const[a,b]of sh(D4)){const x=c+a,y=r+b;if(x<0||y<0||x>=cn||y>=rn||set.has(key(x,y)))continue;
+   if(D4.some(([e,f])=>(x+e!==c||y+f!==r)&&set.has(key(x+e,y+f))))continue;
+   set.add(key(x,y));path.push([x,y]);const res=go(path,set);if(res)return res;path.pop();set.delete(key(x,y))}return null};
+ for(let l=Ln;l>=4;l--){Ln=l;steps=0;const P=go([[0,0]],new Set([key(0,0)]));if(P)return P}return[[0,0],[1,0],[2,0],[3,0]]}
 function mkLetters(i){const cn=[6,6,7,7,8,8,9,9,10,10][i],rn=[4,4,4,5,5,5,5,6,6,6][i],cs=Math.min(80,Math.floor(800/cn)),x0=(W-cn*cs)/2,y0=105+(490-rn*cs)/2,AL=[...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'],tg=AL[ri(26)],
- FT=['900 40px sans-serif','italic 42px serif','38px monospace','bold 40px Georgia, serif','900 38px cursive'],key=(c,r)=>c+','+r,par={},vis={'0,0':1},st=[[0,0]];
- while(st.length){const[c,r]=st[st.length-1],nb=[[1,0],[-1,0],[0,1],[0,-1]].map(([a,b])=>[c+a,r+b]).filter(([x,y])=>x>=0&&y>=0&&x<cn&&y<rn&&!vis[key(x,y)]);
-  if(!nb.length){st.pop();continue}const q=nb[ri(nb.length)];vis[key(...q)]=1;par[key(...q)]=[c,r];st.push(q)}
- const pth={};let q=[cn-1,rn-1];pth[key(...q)]=1;while(par[key(...q)]){q=par[key(...q)];pth[key(...q)]=1}
- const g=Array.from({length:cn},(_,c)=>Array.from({length:rn},(_,r)=>{const t=pth[key(c,r)]||Math.random()<.1+i*.02,o=AL.filter(a=>a!==tg);return{t,ch:t?(Math.random()<.5?tg:tg.toLowerCase()):(l=>Math.random()<.5?l:l.toLowerCase())(o[ri(25)]),f:FT[ri(5)]}}));
+ FT=['900 40px sans-serif','italic 42px serif','38px monospace','bold 40px Georgia, serif','900 38px cursive'],key=(c,r)=>c+','+r,P=chord(cn,rn,Math.floor(cn*rn*.36)),on={},end=P[P.length-1];P.forEach(q=>on[key(...q)]=1);
+ const g=Array.from({length:cn},(_,c)=>Array.from({length:rn},(_,r)=>{const t=on[key(c,r)],o=AL.filter(a=>a!==tg);return{t,ch:t?(Math.random()<.5?tg:tg.toLowerCase()):(l=>Math.random()<.5?l:l.toLowerCase())(o[ri(25)]),f:FT[ri(5)]}}));
  const cell=p=>{const c=Math.floor((p[0]-x0)/cs),r=Math.floor((p[1]-y0)/cs);return c>=0&&r>=0&&c<cn&&r<rn?[c,r]:null},ct=c=>[x0+(c[0]+.5)*cs,y0+(c[1]+.5)*cs];let tr=[[0,0]],bad=[0,0,0];
  return{on:false,
  down(p){const c=cell(p),t=tr[tr.length-1];if(c&&c[0]===t[0]&&c[1]===t[1])this.on=true},up(){this.on=false},
  move(p){const c=cell(p),t=tr[tr.length-1];if(!c||(c[0]===t[0]&&c[1]===t[1])||Math.abs(c[0]-t[0])+Math.abs(c[1]-t[1])!==1)return;
   if(tr.length>1&&c[0]===tr[tr.length-2][0]&&c[1]===tr[tr.length-2][1]){tr.pop();return}
   if(!g[c[0]][c[1]].t){bad=[c[0],c[1],14];beep(180,.1);return}
-  if(tr.some(u=>u[0]===c[0]&&u[1]===c[1]))return;tr.push(c);beep(500,.04);if(c[0]===cn-1&&c[1]===rn-1){this.on=false;win()}},
+  if(tr.some(u=>u[0]===c[0]&&u[1]===c[1]))return;tr.push(c);beep(500,.04);if(c[0]===end[0]&&c[1]===end[1]){this.on=false;win()}},
  draw(){T(tg+tg.toLowerCase(),130,55,70);
   for(let c=0;c<cn;c++)for(let r=0;r<rn;r++){const p=ct([c,r]);O(p[0],p[1],cs/2-4,'#fff',INK,3)}
   L(tr.map(ct),cs/2.4,'rgba(255,210,63,.85)');
   for(let c=0;c<cn;c++)for(let r=0;r<rn;r++){const p=ct([c,r]),e=g[c][r];T(e.ch,p[0],p[1],0,INK,e.f)}
   if(bad[2]>0){bad[2]--;const p=ct(bad);O(p[0],p[1],cs/2-4,'rgba(214,69,65,.45)')}
-  const a=ct([0,0]),z=ct([cn-1,rn-1]);T('▼',a[0],a[1]-cs/2-12,24,'#d64541');T('终点 ▲',z[0],z[1]+cs/2+14,22,'#d64541')}}}
+  const a=ct([0,0]),z=ct(end);T('起点',a[0],a[1]-cs/2-14,22,'#d64541');O(z[0],z[1],cs/2-1,0,'#d64541',5);T('终点',z[0],z[1]+cs/2+14,22,'#d64541')}}}
+
+/* 顺序找路：按颜色 / 形状 / 字母的顺序走，只有一条路 */
+function shp2(k,x,y,r){X.beginPath();if(k===0)X.arc(x,y,r,0,7);else{const P=k===1?[[-1,-1],[1,-1],[1,1],[-1,1]]:k===2?[[0,-1.1],[1.1,.9],[-1.1,.9]]:k===3?[[0,-1.2],[1.2,0],[0,1.2],[-1.2,0]]:k===4?Array.from({length:10},(_,j)=>{const a=-Math.PI/2+j*Math.PI/5,q=j%2?.45:1.15;return[q*Math.cos(a),q*Math.sin(a)]}):Array.from({length:6},(_,j)=>{const a=j*Math.PI/3;return[1.1*Math.cos(a),1.1*Math.sin(a)]});
+ P.forEach((q,j)=>j?X.lineTo(x+q[0]*r,y+q[1]*r):X.moveTo(x+q[0]*r,y+q[1]*r));X.closePath()}X.fillStyle='#f8a5c2';X.fill();X.strokeStyle=INK;X.lineWidth=4;X.stroke()}
+function mkSeq(i){const cn=[5,6,6,7,7,8,8,9,9,10][i],rn=[3,4,4,4,5,5,5,6,6,6][i],kind=i%3===0?0:i%3===1?1:2,cs=Math.min(80,Math.floor(800/cn)),x0=(W-cn*cs)/2,y0=125+(465-rn*cs)/2,key=(c,r)=>c+','+r,D4=[[1,0],[-1,0],[0,1],[0,-1]],AL=[...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'];
+ let P=chord(cn,rn,Math.floor(cn*rn*.36));if(kind===2)P=P.slice(0,Math.min(P.length,18));
+ const p=kind===0?[4,4,5,5][[0,3,6,9].indexOf(i)]:kind===1?[3,4,5][[1,4,7].indexOf(i)]:1,seq=sh([0,1,2,3,4,5]).slice(0,p),st=kind===2?ri(26-P.length+1):0,sym=m=>kind===2?st+m:seq[m%p],idx={},end=P[P.length-1];
+ P.forEach((q,m)=>idx[key(...q)]=m);
+ const g=Array.from({length:cn},(_,c)=>Array.from({length:rn},(_,r)=>{const m=idx[key(c,r)];if(m!==undefined)return sym(m);
+  const bd=new Set();D4.forEach(([a,b])=>{const j=idx[key(c+a,r+b)];if(j!==undefined&&j+1<P.length)bd.add(sym(j+1))});
+  const ok=(kind===2?[...Array(26).keys()]:[0,1,2,3,4,5]).filter(v=>!bd.has(v));return ok[ri(ok.length)]}));
+ const cell=q=>{const c=Math.floor((q[0]-x0)/cs),r=Math.floor((q[1]-y0)/cs);return c>=0&&r>=0&&c<cn&&r<rn?[c,r]:null},ct=c=>[x0+(c[0]+.5)*cs,y0+(c[1]+.5)*cs];let tr=[[0,0]],bad=[0,0,0];
+ return{on:false,ttl:['颜色找路','形状找路','字母顺序'][kind],tip:['按上面颜色的顺序，一格一格走到终点（颜色会重复出现）','按上面形状的顺序，一格一格走到终点（形状会重复出现）','按字母表的顺序 A→B→C，一格一格走到终点'][kind],
+ down(q){const c=cell(q),t=tr[tr.length-1];if(c&&c[0]===t[0]&&c[1]===t[1])this.on=true},up(){this.on=false},
+ move(q){const c=cell(q),t=tr[tr.length-1];if(!c||(c[0]===t[0]&&c[1]===t[1])||Math.abs(c[0]-t[0])+Math.abs(c[1]-t[1])!==1)return;
+  if(tr.length>1&&c[0]===tr[tr.length-2][0]&&c[1]===tr[tr.length-2][1]){tr.pop();return}
+  if(tr.some(u=>u[0]===c[0]&&u[1]===c[1]))return;
+  if(g[c[0]][c[1]]!==sym(tr.length)){bad=[c[0],c[1],14];beep(180,.1);return}
+  tr.push(c);beep(500,.04);if(c[0]===end[0]&&c[1]===end[1]){this.on=false;win()}},
+ draw(){if(kind===2)T('字母顺序：'+AL[st]+' → '+AL[st+1]+' → '+AL[st+2]+' → …',480,60,34);
+  else{for(let k=0;k<=p;k++){const x=480+(k-p/2)*80;if(k===p)T('↻',x,60,36);else{kind?shp2(seq[k],x,60,20):O(x,60,22,CL[seq[k]],INK,3);T('→',x+40,60,28)}}}
+  for(let c=0;c<cn;c++)for(let r=0;r<rn;r++){const q=ct([c,r]);O(q[0],q[1],cs/2-4,'#fff',INK,3)}
+  L(tr.map(ct),cs/2.4,'rgba(255,210,63,.85)');
+  for(let c=0;c<cn;c++)for(let r=0;r<rn;r++){const q=ct([c,r]),v=g[c][r];if(kind===0)O(q[0],q[1],cs/2-15,CL[v]);else if(kind===1)shp2(v,q[0],q[1],cs*.27);else T(AL[v],q[0],q[1],38)}
+  if(bad[2]>0){bad[2]--;const q=ct(bad);O(q[0],q[1],cs/2-4,'rgba(214,69,65,.45)')}
+  const a=ct([0,0]),z=ct(end);T('起点',a[0],a[1]-cs/2-14,22,'#d64541');O(z[0],z[1],cs/2-1,0,'#d64541',5);T('终点',z[0],z[1]+cs/2+14,22,'#d64541')}}}
 
 /* 10 连点成画 */
 function poly(P,N){const Q=P.concat([P[0]]),tot=len(Q),o=[];let k=1,acc=0,seg=d(Q[0],Q[1]);for(let j=0;j<N;j++){const t=j/N*tot;while(k<Q.length-1&&acc+seg<t){acc+=seg;k++;seg=d(Q[k-1],Q[k])}const u=(t-acc)/seg;o.push([Q[k-1][0]+(Q[k][0]-Q[k-1][0])*u,Q[k-1][1]+(Q[k][1]-Q[k-1][1])*u])}return o}
@@ -409,7 +445,7 @@ function mkDots(i){const N=[10,14,16,16,20,22,24,28,32,40][i],P=PS[i](N),B=bb(P)
   Q.forEach((q,j)=>{O(q[0],q[1],13,j<=k?'#ffd23f':'#fff',INK,3);T(j+1,q[0],q[1],0,INK,'900 14px sans-serif')});spr(X,'pig',Q[k][0],Q[k][1]-30,2)}}}
 
 /* ---------- 110 关：11 题型 × 10，每轮打乱题型顺序，难度逐轮上升 ---------- */
-const TY=[['描发丝','沿着虚线，把每一根头发从上到下描出来',mkHair],['颜色连线','看数字对应的颜色，按顺序把圆点连起来',mkColNum],['红绿灯','绿灯连成线，遇到红灯要绕开，不能碰到',mkLights],['数字涂色','先选彩笔，再按数字涂上对应的颜色',mkDonut],['开口涂色','看开口朝哪，涂上对应的颜色',mkOpen],['线条画画','看颜色，在色条里画出对应的线',mkLines],['画箭头','看颜色，在方框里画出对应的箭头',mkArrows],['画图形','看颜色，给圆点画上对应的图形',mkShapes],['圆圈迷宫','按住小猪，从中间走出迷宫，到外面的泥坑',mkPolar],['字母找路','沿着相同的字母，一格一格连到终点',mkLetters],['连点成画','按数字顺序，把点点连起来',mkDots]];
+const TY=[['描发丝','沿着虚线，把每一根头发从上到下描出来',mkHair],['颜色连线','看数字对应的颜色，按顺序把圆点连起来',mkColNum],['红绿灯','绿灯连成线，遇到红灯要绕开，不能碰到',mkLights],['数字涂色','先选彩笔，再按数字涂上对应的颜色',mkDonut],['开口涂色','看开口朝哪，涂上对应的颜色',mkOpen],['线条画画','看颜色，在色条里画出对应的线',mkLines],['画箭头','看颜色，在方框里画出对应的箭头',mkArrows],['画图形','看颜色，给圆点画上对应的图形',mkShapes],['圆圈迷宫','按住小猪，从中间走出迷宫，到外面的泥坑',mkPolar],['字母找路','沿着相同的字母（大小写都算），一格一格连到终点，只有一条路',mkLetters],['顺序找路','看上面的顺序，按顺序一格一格走到终点',mkSeq],['连点成画','按数字顺序，把点点连起来',mkDots]];
 const LV=[];for(let r=0;r<10;r++)sh(TY.keys()).forEach(t=>LV.push({n:TY[t][0],t:TY[t][1],f:()=>TY[t][2](r)}));
 const NL=LV.length;
 
@@ -418,7 +454,7 @@ const ov=$('ov'),sel=$('sel'),pp=$('pp'),gr=$('grid'),ls={get(k){try{return loca
 let cur=Math.min(+ls.get('pp2_cur')||0,NL-1),done=new Set(JSON.parse(ls.get('pp2_done')||'[]')),L_=null,lock=true,mode='start';
 const save=()=>{ls.set('pp2_cur',cur);ls.set('pp2_done',JSON.stringify([...done]))};
 pp.width=104;pp.height=104;spr(pp.getContext('2d'),'pig',52,52,8);
-function load(){const v=LV[cur];L_=v.f();$('tip').textContent=v.t;$('title').textContent=v.n;$('rd').textContent='第 '+(cur+1)+'/'+NL+' 关 ▾';$('st').textContent='★ '+done.size;lock=false}
+let sd=0;function load(rt){const v=LV[cur];if(!rt)sd=Math.random()*1e9|0;L_=seeded(sd,v.f);$('tip').textContent=L_.tip||v.t;$('title').textContent=L_.ttl||v.n;$('rd').textContent='第 '+(cur+1)+'/'+NL+' 关 ▾';$('st').textContent='★ '+done.size;lock=false}
 function win(){if(lock)return;lock=true;if(L_)L_.on=false;done.add(cur);save();beep(523,.1);setTimeout(()=>beep(784,.2),120);
  $('st').textContent='★ '+done.size;const last=cur===NL-1;mode=last?'end':'next';
  $('oh').textContent=last?NL+' 关全部完成！':'太棒了！';$('op').textContent=last?'小猪拿到了 '+done.size+' 颗星星，控笔小达人！':'第 '+(cur+1)+' 关完成，继续加油！';
@@ -427,12 +463,226 @@ $('ob').textContent=cur?'继续第 '+(cur+1)+' 关':'开始玩';
 $('ob').onclick=()=>{ov.hidden=true;pp.classList.remove('hop');if(mode==='next')cur++;else if(mode==='end')cur=0;mode='play';save();load()};
 LV.forEach((_,k)=>{const b=document.createElement('b');b.textContent=k+1;b.onclick=()=>{cur=k;mode='play';sel.hidden=ov.hidden=true;pp.classList.remove('hop');save();load()};gr.appendChild(b)});
 $('rd').style.cursor='pointer';$('rd').onclick=()=>{[...gr.children].forEach((b,k)=>b.className=k===cur?'cur':done.has(k)?'on':'');sel.hidden=false};
-$('sb').onclick=()=>sel.hidden=true;$('st').textContent='★ '+done.size;
+$('sb').onclick=()=>sel.hidden=true;$('rs').onclick=()=>{if(!L_)return;ov.hidden=sel.hidden=true;pp.classList.remove('hop');mode='play';load(true)};$('st').textContent='★ '+done.size;
 function pos(e){const r=C.getBoundingClientRect();return[(e.clientX-r.left)*W/r.width,(e.clientY-r.top)*H/r.height]}
 C.addEventListener('pointerdown',e=>{if(!L_||lock)return;C.setPointerCapture(e.pointerId);L_.down(pos(e))});
 C.addEventListener('pointermove',e=>{if(L_&&!lock&&L_.on)L_.move(pos(e))});
 ['pointerup','pointercancel'].forEach(t=>C.addEventListener(t,e=>{if(L_&&!lock)L_.up(pos(e))}));
 function frame(){if(ACT==='b_'){bg();if(L_)L_.draw()}requestAnimationFrame(frame)}
+frame();
+
+})();
+/* ================= 阶段三 ================= */
+(function(){
+const $=id=>document.getElementById('c_'+id),C=$('c'),X=C.getContext('2d'),W=960,H=600;
+const CL=['#d64541','#3a86d8','#f2d14b','#6ab04c','#d56fa8','#e08a2e'],INK='#4a2a3c',TP=Math.PI*2;
+const PAL={p:'#f8a5c2',d:'#e0568f',k:'#2b2b2b',r:'#e63946'};
+const SP={pig:["..dd.....dd..",".dppd...dppd.",".dpppppppppd.","dpppppppppppd","dppkpppppkppd","dppkpppppkppd","dpppdddddpppd","dpppdkdkdpppd","dpppdddddpppd",".dpppppppppd.","..ddddddddd..","...rrrrrrr...","..rrrrrrrrr.."]};
+function spr(ctx,n,cx,cy,s){const r=SP[n],w=r[0].length,h=r.length,x0=Math.round(cx-w*s/2),y0=Math.round(cy-h*s/2);r.forEach((row,j)=>[...row].forEach((ch,i)=>{if(ch!=='.'){ctx.fillStyle=PAL[ch];ctx.fillRect(x0+i*s,y0+j*s,s,s)}}))}
+const d=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1]),R=(a,b)=>a+Math.random()*(b-a),ri=n=>Math.random()*n|0,sh=a=>[...a].sort(()=>Math.random()-.5);
+function T(s,x,y,z,c){X.fillStyle=c||INK;X.font='900 '+z+'px sans-serif';X.textAlign='center';X.textBaseline='middle';X.fillText(s,x,y+1)}
+function O(x,y,r,f,s,w){X.beginPath();X.arc(x,y,r,0,7);if(f){X.fillStyle=f;X.fill()}if(s){X.strokeStyle=s;X.lineWidth=w||3;X.stroke()}}
+function L(a,w,c,dash){X.setLineDash(dash||[]);X.lineWidth=w;X.strokeStyle=c;X.lineCap=X.lineJoin='round';X.beginPath();a.forEach((q,k)=>k?X.lineTo(q[0],q[1]):X.moveTo(q[0],q[1]));X.stroke();X.setLineDash([])}
+const RC=(x,y,w,h,f,s,lw)=>{if(f){X.fillStyle=f;X.fillRect(x-w/2,y-h/2,w,h)}if(s){X.strokeStyle=s;X.lineWidth=lw||3;X.strokeRect(x-w/2,y-h/2,w,h)}};
+function bg(){for(let y=0;y<H;y+=20)for(let x=0;x<W;x+=20){X.fillStyle=((x+y)/20)%2?'#f3f9e6':'#ecf5da';X.fillRect(x,y,20,20)}}
+function rs(p,st){const o=[p[0]];let a=0;for(let k=1;k<p.length;k++){a+=d(p[k],p[k-1]);if(a>=st){o.push(p[k]);a=0}}o.push(p[p.length-1]);return o}
+const sm=a=>{for(let k=0;k<3;k++){const o=[a[0]];for(let i=0;i<a.length-1;i++){const p=a[i],q=a[i+1];o.push([.75*p[0]+.25*q[0],.75*p[1]+.25*q[1]],[.25*p[0]+.75*q[0],.25*p[1]+.75*q[1]])}o.push(a[a.length-1]);a=o}return a};
+function arrw(x,y,dr,z,c,w){const v=[[1,0],[0,-1],[-1,0],[0,1]][dr],u=[-v[1],v[0]],b=[x+v[0]*z,y+v[1]*z],k=z*.6;L([[x-v[0]*z,y-v[1]*z],b],w,c);L([[b[0]-v[0]*k+u[0]*k,b[1]-v[1]*k+u[1]*k],b,[b[0]-v[0]*k-u[0]*k,b[1]-v[1]*k-u[1]*k]],w,c)}
+function SH(k,x,y,r,c){X.beginPath();
+ if(k==='circ'||k==='ring')X.arc(x,y,r,0,7);
+ else if(k==='heart'){X.moveTo(x,y+r*.9);X.bezierCurveTo(x-r*1.6,y-r*.1,x-r*.8,y-r*1.1,x,y-r*.4);X.bezierCurveTo(x+r*.8,y-r*1.1,x+r*1.6,y-r*.1,x,y+r*.9)}
+ else{const P={tri:[[0,-1],[1,.8],[-1,.8]],sq:[[-1,-1],[1,-1],[1,1],[-1,1]],rect:[[-1.5,-.8],[1.5,-.8],[1.5,.8],[-1.5,.8]],dia:[[0,-1.2],[1,0],[0,1.2],[-1,0]],star:Array.from({length:10},(_,j)=>{const a=-Math.PI/2+j*Math.PI/5,q=j%2?.45:1.15;return[q*Math.cos(a),q*Math.sin(a)]}),hex:Array.from({length:6},(_,j)=>[1.1*Math.cos(j*Math.PI/3),1.1*Math.sin(j*Math.PI/3)])}[k];
+  P.forEach((q,j)=>j?X.lineTo(x+q[0]*r,y+q[1]*r):X.moveTo(x+q[0]*r,y+q[1]*r));X.closePath()}
+ if(k==='ring'){X.fillStyle='#fff';X.fill();X.strokeStyle=c;X.lineWidth=7;X.stroke()}else{X.fillStyle=c;X.fill();X.strokeStyle=INK;X.lineWidth=3;X.stroke()}}
+const FR=['🍎','🍌','🍐','🍉','🍑','🍊','🍇','🍓','🍍','🥭'],AN=[...'🐶🐱🐭🐹🐰🦊🐻🐼🐨🐯🦁🐮🐷🐸🐵🐔🐧🐦🐤🦆🦉🐴🦄🐝🐛🦋🐌🐞🐢🐍🦖🐙🦀🐠🐬🐳🦈🐘🦒🦓🐑🐫'];
+const js=A=>JSON.stringify(A),fl=A=>A.map(r=>[...r].reverse()),fv=A=>[...A].reverse().map(r=>[...r]),cwr=A=>A[0].map((_,c)=>A.map(r=>r[c]).reverse());
+function gdraw(A,cx,cy,sz){const n=A.length,cs=sz/n;A.forEach((row,r)=>row.forEach((v,c)=>RC(cx+(c-(n-1)/2)*cs,cy+(r-(n-1)/2)*cs,cs,cs,v?['','#d64541','#3a86d8','#f2d14b'][v]:'#fff','#bbb',1)));RC(cx,cy,sz,sz,0,INK,3)}
+
+/* ===== 三种通用题板：选择 / 填数 / 连线 ===== */
+function mkPick(Rn,gen){let r=0,cu=gen(0);
+ return{on:false,
+ down(p){const o=cu.opts.find(o=>Math.abs(p[0]-o.x)<o.w/2&&Math.abs(p[1]-o.y)<o.h/2);if(!o)return;
+  if(o.ok){beep(700,.08);r++;if(r>=Rn)win();else cu=gen(r)}else{o.sh=14;beep(180,.15)}},
+ move(){},up(){},
+ draw(){cu.q();cu.opts.forEach(o=>{const x=o.x+(o.sh>0?(o.sh--%4<2?5:-5):0);RC(x,o.y,o.w,o.h,'#fff',o.sh>0?'#d64541':INK,4);o.g(x,o.y,o.w,o.h)});T((r+1)+' / '+Rn,900,26,22)}}}
+function mkNum(Rn,gen){let r=0,cu,sl=0;const kx=k=>480+(k-5)*72,ld=()=>{cu=gen(r);cu.f.forEach(f=>{f.ok=0;f.v='';f.sh=0});sl=0};ld();
+ return{on:false,
+ down(p){const f=cu.f.findIndex(f=>!f.ok&&Math.abs(p[0]-f.x)<f.w/2+6&&Math.abs(p[1]-f.y)<f.h/2+6);if(f>=0){sl=f;cu.f[f].v='';return}
+  if(p[1]<528)return;const k=Math.round((p[0]-480)/72+5);if(k<0||k>10||Math.abs(p[0]-kx(k))>34)return;const q=cu.f[sl];if(!q||q.ok)return;
+  if(k===10){q.v='';return}q.v+=k;
+  if(q.v.length>=String(q.ans).length){if(+q.v===q.ans){q.ok=1;beep(700,.06);sl=cu.f.findIndex(z=>!z.ok);if(sl<0){r++;if(r>=Rn)win();else ld()}}else{q.sh=14;q.v='';beep(180,.15)}}},
+ move(){},up(){},
+ draw(){cu.q();cu.f.forEach((f,k)=>{const x=f.x+(f.sh>0?(f.sh--%4<2?5:-5):0),se=k===sl&&!f.ok,bc=se?'#e0a000':INK,fc=f.ok?'#dff5d8':'#fff';
+   if(f.c)O(x,f.y,f.w/2,fc,bc,se?7:4);else RC(x,f.y,f.w,f.h,fc,bc,se?7:4);T(f.ok?f.ans:f.v,x,f.y,f.h*.7,f.ok?'#2e8b57':INK)});
+  X.fillStyle='rgba(255,255,255,.8)';X.fillRect(0,520,W,80);for(let k=0;k<=10;k++){RC(kx(k),560,62,54,'#ffd23f',INK,4);T(k===10?'⌫':k,kx(k),560,30)}
+  if(Rn>1)T((r+1)+' / '+Rn,900,24,22)}}}
+function mkLink(Rn,gen){let r=0,cu,ln=[],dr=null;const ld=()=>{cu=gen(r);ln=[];dr=null};ld();const hit=p=>cu.items.find(o=>d(p,[o.x,o.y])<o.r);
+ return{on:false,
+ down(p){const o=hit(p);if(o){dr={o,p};this.on=true}},move(p){if(dr)dr.p=p},
+ up(p){this.on=false;if(!dr)return;const a=dr.o,b=hit(p);dr=null;if(!b||b===a)return;
+  if(cu.ok(a,b)&&!ln.some(l=>(l[0]===a&&l[1]===b)||(l[0]===b&&l[1]===a))){ln.push([a,b]);beep(800,.06);if(ln.length>=cu.need){r++;if(r>=Rn)win();else ld()}}else beep(180,.15)},
+ draw(){cu.q();ln.forEach(([a,b])=>L([[a.x,a.y],[b.x,b.y]],9,'#e0568f'));cu.items.forEach(o=>o.g(o.x,o.y));if(dr)L([[dr.o.x,dr.o.y],dr.p],7,'#e0568f',[10,8]);if(Rn>1)T((r+1)+' / '+Rn,900,24,22)}}}
+
+/* ===== 1 拼图 ===== */
+const SIL=[[".#.","###","###","#.#"],["..#..",".###.","#####",".#.#."],["..###..",".#####.","#######",".#...#."],[".#...#.","#######","#######",".#####.","..#.#.."],["..###..",".#####.","#######","...#...","...#...","..##..."],["#.....##","########",".######.",".#....#."],["#.#.#.#","#######","#######","#######","###.###"],["...#...","..###..",".#####.",".#####.","#######",".##.##."],["..#...#..",".#######.","#########","#########",".#######.","..#...#..","..##.##.."],["....#....","...###...","..#####..",".#######.","#########","#########",".#######.","..##.##.."]];
+function part(cells,np){const id=new Map(cells.map((c,k)=>[c[0]+','+c[1],k])),pc=cells.map((_,k)=>k),adj=k=>[[1,0],[-1,0],[0,1],[0,-1]].map(([a,b])=>id.get((cells[k][0]+a)+','+(cells[k][1]+b))).filter(v=>v!==undefined),
+ gs=()=>{const g={};pc.forEach((p,k)=>(g[p]=g[p]||[]).push(k));return g},mg=(a,b)=>{for(let k=0;k<pc.length;k++)if(pc[k]===b)pc[k]=a};
+ let ms=4,tr=0;while(Object.keys(gs()).length>np&&tr++<6000){const g=gs(),k=ri(cells.length),nb=adj(k).filter(v=>pc[v]!==pc[k]);if(!nb.length)continue;const v=nb[ri(nb.length)];if(g[pc[k]].length+g[pc[v]].length<=ms)mg(pc[k],pc[v]);else if(tr%60===0)ms++}
+ for(let t=0;t<300;t++){const g=gs(),s1=Object.keys(g).find(q=>g[q].length<2);if(s1===undefined)break;const k=g[s1][0],nb=adj(k).filter(v=>pc[v]!==pc[k]);if(nb.length)mg(pc[nb[ri(nb.length)]],pc[k])}
+ return gs()}
+function rot(p){const h=p.h;p.cells=p.cells.map(([c,r])=>[h-1-r,c]);[p.w,p.h]=[p.h,p.w]}
+function mkPuzzle(i){const S=SIL[i],cells=[];S.forEach((row,r)=>[...row].forEach((ch,c)=>ch==='#'&&cells.push([c,r])));
+ const cw=S[0].length,chh=S.length,cs=Math.min(42,Math.floor(560/cw),Math.floor(290/chh)),gx=480-cw*cs/2,gy=26,occ=new Set(cells.map(c=>c.join())),ts=cs*.52,ty0=gy+chh*cs+34,
+ PC=['#f4a6a0','#f7d774','#9ad48b','#8fc7f0','#c9a6e8','#f5b87a','#7fd6c9','#f0a0c8','#b8d46a','#e8c4a0'],
+ P=Object.values(part(cells,[3,3,4,4,5,5,6,6,7,8][i])).map((ks,k)=>{const cc=ks.map(q=>cells[q]),x0=Math.min(...cc.map(c=>c[0])),y0=Math.min(...cc.map(c=>c[1])),n=cc.map(c=>[c[0]-x0,c[1]-y0]),p={cells:n,w:Math.max(...n.map(c=>c[0]))+1,h:Math.max(...n.map(c=>c[1]))+1,col:PC[k%10],pos:null,t:[0,0]};if(i>=4)for(let q=ri(4);q>0;q--)rot(p);return p});
+ let x=40,y=ty0,rh=0;P.forEach(p=>{const m=Math.max(p.w,p.h)*ts,sw=m+22;if(x+sw>930){x=40;y+=rh+14;rh=0}p.t=[x+sw/2,y+m/2];x+=sw;rh=Math.max(rh,m)});
+ let dg=null;const tk=(c,r,ex)=>P.some(q=>q!==ex&&q.pos&&q.cells.some(([a,b])=>q.pos[0]+a===c&&q.pos[1]+b===r)),
+ dp=(p,cx,cy,sz,al)=>{X.globalAlpha=al||1;p.cells.forEach(([c,r])=>RC(cx+(c-(p.w-1)/2)*sz,cy+(r-(p.h-1)/2)*sz,sz,sz,p.col,INK,2));X.globalAlpha=1};
+ return{on:false,P,cs,gx,gy,occ,cells,
+ down(p){for(const q of [...P].reverse()){if(q.pos&&q.cells.some(([a,b])=>Math.abs(p[0]-(gx+(q.pos[0]+a+.5)*cs))<cs/2&&Math.abs(p[1]-(gy+(q.pos[1]+b+.5)*cs))<cs/2)){dg={p:q,sp:p,cur:p,mv:0,from:1,ol:q.pos};q.pos=null;this.on=true;return}}
+  const q=P.find(q=>!q.pos&&Math.abs(p[0]-q.t[0])<q.w*ts/2+8&&Math.abs(p[1]-q.t[1])<q.h*ts/2+8);if(q){dg={p:q,sp:p,cur:p,mv:0,from:0};this.on=true}},
+ move(p){if(dg){dg.cur=p;dg.mv=Math.max(dg.mv,d(p,dg.sp))}},
+ up(p){this.on=false;if(!dg)return;const q=dg.p;if(!dg.from&&dg.mv<8){rot(q);beep(500,.04)}else{
+   const c0=Math.round((p[0]-q.w*cs/2-gx)/cs),r0=Math.round((p[1]-q.h*cs/2-gy)/cs),ok=q.cells.every(([a,b])=>occ.has((c0+a)+','+(r0+b))&&!tk(c0+a,r0+b,q));
+   if(ok){q.pos=[c0,r0];beep(700,.06)}else{q.pos=dg.from?dg.ol:null;beep(180,.1)}}
+  dg=null;if(P.reduce((a,q)=>a+(q.pos?q.cells.length:0),0)===cells.length)win()},
+ draw(){T('把小块拖进轮廓里拼满；点一下小块可以转方向',480,12,16);cells.forEach(([c,r])=>RC(gx+(c+.5)*cs,gy+(r+.5)*cs,cs,cs,'#fff','#bbb',2));
+  P.forEach(q=>{if(q.pos)dp(q,gx+(q.pos[0]+q.w/2)*cs,gy+(q.pos[1]+q.h/2)*cs,cs)});
+  L([[30,ty0-16],[930,ty0-16]],3,'#999',[12,10]);P.forEach(q=>{if(!q.pos&&!(dg&&dg.p===q))dp(q,q.t[0],q.t[1],ts)});if(dg)dp(dg.p,dg.cur[0],dg.cur[1],cs,.8)}}}
+
+/* ===== 2 镜像 ===== */
+function mkMirror(i){const n=[4,4,5,5,5,6,6,6,7,7][i];
+ return mkPick(3,()=>{let P,M,D;for(let t=0;t<300;t++){P=Array.from({length:n},()=>Array.from({length:n},()=>Math.random()<.55?1+ri(3):0));M=fl(P);const md=M.map(r=>[...r]),a=ri(n),b=ri(n);md[a][b]=md[a][b]?0:1+ri(3);D=[P,fv(P),i>=5?md:fv(M)];if(new Set([M,...D].map(js)).size===4)break}
+  const o=sh([M,...D].map((A,k)=>({A,ok:k===0}))).map((q,k)=>({x:480+(k-1.5)*220,y:440,w:196,h:196,ok:q.ok,g:(x,y)=>gdraw(q.A,x,y,170)}));
+  return{q(){T('小朋友在照镜子，镜子里的样子是哪一个？',480,36,28);gdraw(P,250,200,200);L([[400,100],[400,300]],10,'#8fd3ff');T('🪞',400,78,40);T('镜子',470,200,28)},opts:o}})}
+/* ===== 3 视角 ===== */
+function mkView(i){const m=i<5?3:4;
+ return mkPick(3,()=>{let P,V;for(let t=0;t<300;t++){P=Array.from({length:m},()=>Array.from({length:m},()=>Math.random()<.5?1+ri(3):0));V=[P,cwr(P),cwr(cwr(P)),cwr(cwr(cwr(P)))];if(new Set(V.map(js)).size===4)break}
+  const seat=ri(4),pos=[[330,495],[560,330],[330,165],[100,330]],em=sh(['🧒','👧','🧑','👦']);
+  return{q(){T('根据例图，是哪个小朋友看到的？',480,28,28);RC(330,330,200,200,'#d9f0a3',INK,5);gdraw(P,330,330,140);RC(800,220,220,220,'#fff',INK,4);gdraw(V[seat],800,220,170);T('例图',800,350,24)},
+   opts:pos.map((p,k)=>({x:p[0],y:p[1],w:110,h:110,ok:k===seat,g:(x,y)=>T(em[k],x,y,70)}))}})}
+/* ===== 4 条件判断 ===== */
+const RU=[['🌧️','下雨','☂️','带雨伞'],['☀️','晴天','🕶️','戴太阳镜'],['❄️','下雪','🧤','戴手套'],['🌙','晚上','🛏️','去睡觉'],['🥵','很热','🍦','吃冰淇淋'],['🥶','很冷','🧥','穿外套'],['😴','困了','🧸','抱小熊'],['😢','难过','🤗','抱一抱']],EX=[['⚽','玩皮球'],['🥤','喝水'],['📚','看书']];
+function mkCond(i){const k=[2,2,3,3,4,4,5,5,6,6][i];
+ return mkPick(3,r=>{const S=sh(RU).slice(0,k),t=S[ri(k)],rev=i>=5&&r%2===1,cw=Math.min(280,Math.floor(900/k)-10),pool=rev?S.map(s=>[s[0],s[1]]):S.map(s=>[s[2],s[3]]),ans=rev?[t[0],t[1]]:[t[2],t[3]],
+   dis=[...sh(pool.filter(p=>p[0]!==ans[0])),...sh(EX)].slice(0,3),opts=sh([ans,...dis]).map((a,j)=>({x:480+(j-1.5)*210,y:490,w:190,h:130,ok:a===ans,g:(x,y)=>{T(a[0],x,y-18,58);T(a[1],x,y+44,20)}}));
+  return{q(){T('先看规则，再选出正确答案',480,24,26);S.forEach((s,j)=>{const x=480+(j-(k-1)/2)*(cw+10);RC(x,105,cw,130,'#fff0f5','#e0568f',4);T(s[0],x-cw*.22,80,38);T('→',x,80,24);T(s[2],x+cw*.22,80,38);T('如果'+s[1]+'，就'+s[3],x,135,15)});
+   if(rev){T(t[2],480,255,70);T('小兔'+t[3]+'了，今天是（　）？',480,330,30)}else{T(t[0],480,255,70);T('今天'+t[1]+'啦！小兔应该（　）？',480,330,30)}},opts}})}
+/* ===== 5 类比推理 ===== */
+const AP={food:[['🐱','🐟'],['🐰','🥕'],['🐵','🍌'],['🐶','🦴'],['🐻','🍯'],['🐭','🧀']],wear:[['🧦','🦶'],['🧤','✋'],['👓','👀'],['👢','🦵']],trav:[['🚗','🛣️'],['🚢','🌊'],['✈️','☁️'],['🚂','🛤️']]};
+function mkAna(i){return mkPick(3,r=>{const key=i<3?'food':i<6?(r%2?'wear':'food'):['food','wear','trav'][(i+r)%3],S=sh(AP[key]),[A,B]=S[0],[Cc,D]=S[1],n=i<3?3:4,
+   pool=Object.values(AP).flat().map(s=>s[1]).filter(e=>e!==D&&e!==B),dis=[...S.slice(2).map(s=>s[1]),...sh(pool)].filter(e=>e!==D).slice(0,n-1),
+   opts=sh([D,...dis]).map((e,j)=>({x:480+(j-(n-1)/2)*230,y:440,w:190,h:170,ok:e===D,g:(x,y)=>T(e,x,y,90)}));
+  return{q(){T(A,200,190,90);T('→',305,190,50);T(B,410,190,90);L([[520,100],[520,280]],4,'#e0568f',[10,10]);T(Cc,640,190,90);T('→',745,190,50);RC(860,190,110,110,'#fff0f5','#e0568f',4);T('？',860,190,70,'#e0568f');T('请选出正确答案',480,320,30)},opts}})}
+/* ===== 6 圆圈矩阵 ===== */
+const MC=['#2e8b3a','#f0a04b','#f9ee50','#c77ef5','#7ccbff','#e8333c','#b9d14f','#e836e8'],CO=[[-1,-1],[1,-1],[-1,1],[1,1]];
+function mkMatrix(i){const n=[2,2,3,3,3,4,4,4,4,4][i];
+ return mkLink(2,()=>{const cl=[],seen=new Set(),base=sh(MC).slice(0,4);while(cl.length<n){const p=i>=5?sh(base):sh(MC).slice(0,4);if(!seen.has(p.join())){seen.add(p.join());cl.push(p)}}
+  const xs=k=>480+(k-(n-1)/2)*(n>3?230:260),cs_=cl.map((c,k)=>({x:xs(k),y:165,r:84,id:k,t:0,g:(x,y)=>{CO.forEach(([a,b],j)=>O(x+a*36,y+b*36,40,c[j]));RC(x,y,66,66,'#fff',INK,3)}})),
+   tl=sh(cl.map((c,k)=>k)).map((id,k)=>({x:xs(k),y:440,r:62,id,t:1,g:(x,y)=>{X.save();X.beginPath();X.rect(x-55,y-55,110,110);X.clip();CO.forEach(([a,b],j)=>O(x+a*55,y+b*55,40,cl[id][j]));X.restore();RC(x,y,110,110,0,INK,3)}}));
+  return{items:[...cs_,...tl],ok:(a,b)=>a.t!==b.t&&a.id===b.id,need:n,q(){T('把图块和图案配成一对：四个角的颜色要一样',480,28,26);L([[50,320],[920,320]],3,'#888',[12,10]);T('✂',28,320,28)}}})}
+/* ===== 7 箭头找答案 ===== */
+function mkArrowGrid(i){const cols=[5,6,6,7,7,8,8,7,7,7][i],rows=[3,3,4,4,5,5,5,6,6,6][i],ln=[3,3,4,4,5,5,6,6,7,7][i],D=[[1,0],[0,-1],[-1,0],[0,1]];
+ return mkPick(3,()=>{const em=sh(AN).slice(0,cols*rows),cs=Math.min(78,Math.floor(900/cols),Math.floor(380/rows)),x0=480-cols*cs/2,y0=180;let c=ri(cols),r_=ri(rows);const s0=[c,r_],seq=[];
+  for(let k=0;k<ln;k++){const ok=[0,1,2,3].filter(j=>{const x=c+D[j][0],y=r_+D[j][1];return x>=0&&y>=0&&x<cols&&y<rows}),j=ok[ri(ok.length)];seq.push(j);c+=D[j][0];r_+=D[j][1]}
+  const opts=[];for(let y=0;y<rows;y++)for(let x=0;x<cols;x++)opts.push({x:x0+(x+.5)*cs,y:y0+(y+.5)*cs,w:cs,h:cs,ok:x===c&&y===r_,g:(px,py)=>{if(x===s0[0]&&y===s0[1])O(px,py,cs*.47,'rgba(255,210,60,.7)');T(em[y*cols+x],px,py,cs*.58)}});
+  return{q(){T('起点',90,40,22,'#d64541');T(em[s0[1]*cols+s0[0]],90,88,52);seq.forEach((j,k)=>arrw(190+k*80,80,j,26,INK,7));T('到哪里？',190+ln*80+30,80,28,'#d64541')},opts}})}
+/* ===== 8 数的分合 ===== */
+function frt(n,e,x,y,w,h){const per=Math.min(5,n),rows=Math.ceil(n/per),sz=Math.min(40,w/(per+.5),h/(rows+.3));for(let k=0;k<n;k++){const rw=k/per|0,m=Math.min(per,n-rw*per);T(e,x+((k%per)-(m-1)/2)*sz*1.15,y+(rw-(rows-1)/2)*sz*1.15,sz)}}
+function mkSplit(i){const Tm=[4,5,6,6,7,8,9,10,10,10][i];
+ return mkNum(3,r=>{const t=3+ri(Tm-2),a=1+ri(t-1),b=t-a,e=FR[ri(10)],mode=(i<3?[0,2,0]:i<6?[0,1,2]:[1,2,3])[r],v=[t,a,b],BX=[[480,95,340,120],[330,300,240,150],[630,300,240,150]],CI=[[480,180],[330,405],[630,405]],gv=mode===0?[]:mode===1?[0]:mode===2?[1,2]:[0,1+ri(2)];
+  return{q(){T('数一数，把数字填进圈圈里',480,26,26);[1,2].forEach(k=>L([[CI[0][0],CI[0][1]],[CI[k][0],mode<3?BX[k][1]-75:CI[k][1]-34]],4,'#9fd8cf'));
+   if(mode<3)BX.forEach((b,k)=>{RC(b[0],b[1],b[2],b[3],'#fff','#9fd8cf',4);frt(v[k],e,b[0],b[1],b[2],b[3])});
+   CI.forEach((c,k)=>{if(gv.includes(k)){O(c[0],c[1],32,'#fff','#9fd8cf',4);T(v[k],c[0],c[1],40)}else O(c[0],c[1],34,0,'#9fd8cf',4)})},
+   f:[0,1,2].filter(k=>!gv.includes(k)).map(k=>({x:CI[k][0],y:CI[k][1],w:64,h:64,c:1,ans:v[k]}))}})}
+/* ===== 9 哪组最多 ===== */
+function mkMost(i){const g=i<5?3:4,mx=[4,5,5,6,6,7,7,8,9,9][i];
+ return mkPick(3,r=>{const least=i>=3&&r%2===1,cnt=sh(Array.from({length:mx},(_,k)=>k+1)).slice(0,g),best=least?Math.min(...cnt):Math.max(...cnt),e0=sh(FR),bw=g===3?260:206;
+  const opts=cnt.map((n,k)=>{const em=i>=6?e0[k]:e0[0],pts=sh(Array.from({length:12},(_,j)=>j)).slice(0,n);return{x:480+(k-(g-1)/2)*(bw+20),y:300,w:bw,h:230,ok:n===best,g:(x,y)=>pts.forEach(p=>T(em,x-bw/2+30+(p%4)*(bw-60)/3,y-85+(p/4|0)*85,38))}});
+  return{q(){T('哪一组的数量'+(least?'最少':'最多')+'？请点出来',480,70,34)},opts}})}
+/* ===== 10 数形状 ===== */
+function mkShapesCount(i){const nt=[2,2,3,3,3,4,4,4,5,5][i],mx=[4,5,5,6,6,7,7,7,7,8][i];
+ return mkNum(2,()=>{const ty=sh(['tri','sq','circ','rect','dia']).slice(0,nt),cn=ty.map(()=>1+ri(mx)),tot=cn.reduce((a,b)=>a+b,0),cells=sh(Array.from({length:40},(_,k)=>k)).slice(0,tot),lst=[];
+  ty.forEach((t,k)=>{for(let j=0;j<cn[k];j++)lst.push(t)});
+  const pl=sh(lst).map((t,k)=>({t,c:CL[ri(6)],x:55+(cells[k]%8)*62+R(-6,6),y:75+(cells[k]/8|0)*78+R(-6,6)}));
+  return{q(){T('数一数，各种形状有几个？',480,26,28);pl.forEach(s=>SH(s.t,s.x,s.y,22,s.c));ty.forEach((t,k)=>{SH(t,640,110+k*82,24,'#cfd8dc');T('→',715,110+k*82,36)})},f:ty.map((t,k)=>({x:810,y:110+k*82,w:80,h:64,ans:cn[k]}))}})}
+/* ===== 11 数量连线 ===== */
+function mkQty(i){const n=[3,3,4,4,4,5,5,5,6,6][i];
+ return mkLink(2,()=>{const qs=sh([1,2,3,4,5,6,7,8,9]).slice(0,n),fr=sh(FR),dc=sh(CL),xs=k=>480+(k-(n-1)/2)*Math.min(150,800/n);
+  const row=(rw,y)=>sh(qs).map((q,k)=>{const ps=sh(Array.from({length:9},(_,j)=>j)).slice(0,q),e=fr[q%10],c=dc[q%6];
+   return{x:xs(k),y,r:62,row:rw,q,g:(x,yy)=>{RC(x,yy,110,110,'#fff','#666',5);if(rw===0)ps.forEach(p=>T(e,x-30+(p%3)*30,yy-30+(p/3|0)*30,q>4?26:34));else if(rw===1)T(q,x,yy,70);else ps.forEach(p=>O(x-30+(p%3)*30,yy-30+(p/3|0)*30,q>4?11:14,c,INK,2))}}});
+  return{items:[...row(0,100),...row(1,300),...row(2,500)],ok:(a,b)=>Math.abs(a.row-b.row)===1&&a.q===b.q,need:2*n,q(){T('把数量相同的图画、数字、点点用线连起来',480,24,24)}}})}
+/* ===== 12 空间思维：正方体展开图 ===== */
+const CN=[[-1,0,0],[0,0,1],[1,0,0],[0,0,-1],[0,1,0],[0,-1,0]],rx=v=>[v[0],-v[2],v[1]],ry=v=>[v[2],v[1],-v[0]];
+const ROTS=(()=>{const seen=new Map([[js(CN),CN]]),q=[CN];while(q.length){const s=q.shift();for(const f of[rx,ry]){const t=s.map(f),k=js(t);if(!seen.has(k)){seen.set(k,t);q.push(t)}}}return[...seen.values()]})();
+function cube3(cx,cy,s,fs,hid,ok,IC){const w=.87*s,h=.5*s,Q=[[[0,0],[-w,-h],[0,-2*h],[w,-h]],[[0,0],[-w,-h],[-w,s-h],[0,s]],[[0,0],[w,-h],[w,s-h],[0,s]]],M=[[w,-h,w,h,cx-w,cy-h],[w,h,0,s,cx-w,cy-h],[w,-h,0,s,cx,cy]];
+ Q.forEach((q,k)=>{X.beginPath();q.forEach((p,j)=>j?X.lineTo(cx+p[0],cy+p[1]):X.moveTo(cx+p[0],cy+p[1]));X.closePath();X.fillStyle=k?'#fff':'#f4f4f4';X.fill();X.strokeStyle=INK;X.lineWidth=4;X.stroke();
+  X.save();X.transform(...M[k]);X.scale(.01,.01);if(k===hid&&!ok)T('?',50,50,80,'#e0568f');else T(IC[fs[k]],50,50,70);X.restore()})}
+function mkCube(i){const n=[1,1,2,2,2,3,3,3,4,4][i],IC=sh(['🐶','🐱','🐰','🐵','🐻','🐼']),POS={1:[[700,270]],2:[[600,270],[820,270]],3:[[560,175],[820,175],[690,385]],4:[[560,175],[820,175],[560,385],[820,385]]}[n],NP=[[-1,0],[0,0],[1,0],[2,0],[0,-1],[0,1]],cb=[];
+ for(let k=0;k<n;k++){const s=ROTS[ri(24)],fs=[s.findIndex(v=>v[1]===1),s.findIndex(v=>v[2]===1),s.findIndex(v=>v[0]===1)],hid=ri(3);cb.push({fs,hid,x:POS[k][0],y:POS[k][1],ok:0,sh:0,ans:IC[fs[hid]]})}
+ let sel=-1;const ix=k=>480+(k-2.5)*100;
+ return{on:false,cb,IC,
+ down(p){if(p[1]>490){const k=Math.round((p[0]-480)/100+2.5);if(sel>=0&&k>=0&&k<6&&Math.abs(p[0]-ix(k))<45){const c=cb[sel];if(IC[k]===c.ans){c.ok=1;sel=-1;beep(700,.08);if(cb.every(q=>q.ok))win()}else{c.sh=14;beep(180,.15)}}return}
+  const k=cb.findIndex(c=>!c.ok&&d(p,[c.x,c.y-20])<90);if(k>=0)sel=k},move(){},up(){},
+ draw(){T('正方体展开图折起来后，问号处是哪个图案？先点正方体，再点下面的图案',480,26,22);
+  NP.forEach((p,f)=>{RC(190+p[0]*62,250+p[1]*62,62,62,'#fff',INK,3);T(IC[f],190+p[0]*62,250+p[1]*62,40)});T('展开图',190,150,22);
+  cb.forEach((c,k)=>{const dx=c.sh>0?(c.sh--%4<2?5:-5):0;if(k===sel)O(c.x,c.y-20,92,'rgba(255,210,60,.45)');cube3(c.x+dx,c.y,62,c.fs,c.hid,c.ok,IC)});
+  for(let k=0;k<6;k++){RC(ix(k),545,84,70,'#fff',INK,4);T(IC[k],ix(k),545,48)}
+  X.fillStyle='rgba(255,255,255,.0)'}}}
+/* ===== 13 上下楼梯 ===== */
+function mkStairs(i){const rows=[3,3,4,4,5,5,5,6,6,6][i],bl=i<6?1:2,steps=i<2?[1,-1]:i<4?[1,-1,2,-2]:i<6?[2,-2,3,-3,5]:[2,-2,3,5,10,-5,-10],lim=i<8?30:100,len=i<4?6:7;
+ return mkNum(1,()=>{const f=[],sq=[];for(let k=0;k<rows;k++){const st=steps[ri(steps.length)],a=st>0?ri(Math.max(1,lim-st*(len-1))):-st*(len-1)+ri(Math.max(1,lim+st*(len-1))),seq=Array.from({length:len},(_,j)=>a+st*j),miss=sh(Array.from({length:len-1},(_,j)=>j+1)).slice(0,bl);
+   sq.push({seq,miss});miss.forEach(j=>f.push({x:480+(j-(len-1)/2)*100,y:75+k*78,w:84,h:60,ans:seq[j]}))}
+  return{q(){T('找规律，填出缺少的数字',480,26,28);sq.forEach((s,k)=>{T(k+1,50,75+k*78,30,'#e0568f');s.seq.forEach((v,j)=>{if(!s.miss.includes(j))T(v,480+(j-(len-1)/2)*100,75+k*78,44)})})},f}})}
+/* ===== 14 图形交替 ===== */
+function mkPattern(i){const U=['AB','AAB','ABC','ABB','AABB','ABAC','ABCD','AABC','ABCDE','AABCC'][i];
+ return mkPick(3,()=>{const SK=sh([['circ','#3a86d8'],['star','#f2d14b'],['tri','#d64541'],['sq','#6ab04c'],['heart','#d56fa8'],['ring','#3a86d8'],['hex','#e08a2e']]),mp={};[...new Set(U)].forEach((ch,k)=>mp[ch]=SK[k]);
+  const m=U.length,shown=m*2+(m>2?1:0),seq=Array.from({length:shown+1},(_,j)=>mp[U[j%m]]),ans=seq[shown],cand=[ans,...SK.filter(s=>s!==ans)].slice(0,4),opts=sh(cand).map((s,k)=>({x:480+(k-1.5)*200,y:400,w:170,h:170,ok:s===ans,g:(x,y)=>SH(s[0],x,y,50,s[1])}));
+  return{q(){T('找规律，接下来应该是什么？',480,50,32);const sp=Math.min(100,860/(shown+1));seq.forEach((s,j)=>{const x=480+(j-shown/2)*sp;if(j<shown)SH(s[0],x,180,sp*.38,s[1]);else{RC(x,180,sp*.8,sp*.8,'#fff0f5','#e0568f',4);T('?',x,180,sp*.6,'#e0568f')}})},opts}})}
+/* ===== 15 虚线连线 ===== */
+function mkTangle(i){const n=[3,3,4,4,5,5,5,6,6,7][i],ys=k=>90+k*(420/(n-1)),nums=Array.from({length:n},(_,k)=>k+1),lc=sh(nums),rc=sh(nums);
+ const S=lc.map((q,a)=>{const b=rc.indexOf(q),w=[[118,ys(a)],[R(300,430),R(70,530)]];if(i>=4)w.push([R(470,560),R(70,530)]);w.push([R(580,690),R(70,530)],[842,ys(b)]);return{P:rs(sm(w),5),i:0,ok:0,q,a,b}});
+ const dots=q=>q===1?[[0,0]]:Array.from({length:q},(_,j)=>{const a=-Math.PI/2+j*TP/q,r=q>5?25:20;return[r*Math.cos(a),r*Math.sin(a)]});let act=null;
+ return{on:false,S,
+ down(p){act=S.find(s=>!s.ok&&d(p,s.P[s.i])<44);this.on=!!act},
+ move(p){const s=act;if(!s)return;let b=-1;for(let j=s.i;j<Math.min(s.P.length,s.i+10);j++)if(d(p,s.P[j])<26)b=j;
+  if(b>s.i){s.i=b;if(b%8===0)beep(300+b,.03)}
+  if(s.i>=s.P.length-3){s.ok=1;s.i=s.P.length-1;this.on=false;beep(700,.1);if(S.every(q=>q.ok))win()}},
+ up(){this.on=false},
+ draw(){T('沿着虚线，把点数和对应的数字连起来',480,24,24);S.forEach(s=>{L(s.P,22,'rgba(255,255,255,.7)');L(s.P,4,'#888',[8,10]);L(s.P.slice(0,s.i+1),11,CL[s.q%6])});
+  lc.forEach((q,a)=>{O(70,ys(a),46,'#fff',CL[q%6],7);dots(q).forEach(o=>O(70+o[0],ys(a)+o[1],6,CL[q%6]))});rc.forEach((q,b)=>{O(890,ys(b),46,'#fff',CL[q%6],7);T(q,890,ys(b),44)})}}}
+/* ===== 16 认识数轴 ===== */
+function mkAxis(i){const rg=[[1,10],[1,13],[1,13],[0,15],[0,16],[0,20],[0,20],[5,25],[0,30],[10,40]][i],np=[2,2,3,3,3,4,4,4,4,4][i],lab=[4,3,3,3,2,2,1,1,1,0][i];
+ return mkNum(2,()=>{const[a,b]=rg,dx=800/(b-a),x0=80,lbl=new Set([a,b]);while(lbl.size<2+lab)lbl.add(a+1+ri(b-a-1));
+  const cand=[];for(let v=a+1;v<b;v++)if(!lbl.has(v))cand.push(v);const pv=sh(cand).slice(0,np).sort((p,q)=>p-q),ic=sh(['🔴','🔵','🟢','🟡','🟣','🟠']).slice(0,np),ord=sh(Array.from({length:np},(_,k)=>k)),tx=j=>480+(j-(np-1)/2)*150;
+  return{q(){T('认识数轴：箭头指着的数字是多少？',480,28,28);L([[x0,250],[x0+800,250]],5,INK);for(let v=a;v<=b;v++){const x=x0+(v-a)*dx,big=lbl.has(v);L([[x,big?228:238],[x,262]],big?5:3,INK);if(big)T(v,x,290,28)}
+   pv.forEach((v,k)=>{const x=x0+(v-a)*dx;T(ic[k],x,150,40);arrw(x,196,3,22,INK,5)});ord.forEach((k,j)=>T(ic[k],tx(j),370,46))},f:ord.map((k,j)=>({x:tx(j),y:445,w:90,h:64,ans:pv[k]}))}})}
+
+/* ===== 160 关：16 题型 × 10，每轮打乱题型顺序，难度逐轮上升 ===== */
+const TY=[['拼图','把小块拖进轮廓里拼满，点一下小块可以转方向',mkPuzzle],['镜像','小朋友在照镜子，找出镜子里的样子',mkMirror],['视角','根据例图，找出是哪个小朋友看到的',mkView],['条件判断','先看规则，再按条件选出正确答案',mkCond],['类比推理','找出前后相同的关系，选出最合适的答案',mkAna],['圆圈矩阵','把图块和图案配对，四个角的颜色要一样',mkMatrix],['箭头找答案','从起点出发，按箭头一步一步走，点出终点',mkArrowGrid],['数的分合','数一数，把数字填进圈圈里',mkSplit],['哪组最多','数一数，点出数量最多（或最少）的一组',mkMost],['数形状','数一数，各种形状有几个',mkShapesCount],['数量连线','把数量相同的图画、数字、点点连起来',mkQty],['空间思维','看展开图，想一想正方体上的问号是哪个图案',mkCube],['上下楼梯','找规律，填出缺少的数字',mkStairs],['图形交替','找规律，选出接下来的图形',mkPattern],['虚线连线','沿着虚线，把点数和对应的数字连起来',mkTangle],['认识数轴','看箭头指着数轴上的哪个数字',mkAxis]];
+const LV=[];for(let r=0;r<10;r++)sh(TY.keys()).forEach(t=>LV.push({n:TY[t][0],t:TY[t][1],f:()=>TY[t][2](r)}));
+const NL=LV.length;
+
+/* ---------- 流程与存档 ---------- */
+const ov=$('ov'),sel=$('sel'),pp=$('pp'),gr=$('grid');
+let cur=Math.min(+ls.get('pp3_cur')||0,NL-1),done=new Set(JSON.parse(ls.get('pp3_done')||'[]')),L_=null,lock=true,mode='start';
+const save=()=>{ls.set('pp3_cur',cur);ls.set('pp3_done',JSON.stringify([...done]))};
+pp.width=104;pp.height=104;spr(pp.getContext('2d'),'pig',52,52,8);
+let sd=0;function load(rt){const v=LV[cur];if(!rt)sd=Math.random()*1e9|0;L_=seeded(sd,v.f);$('tip').textContent=L_.tip||v.t;$('title').textContent=L_.ttl||v.n;$('rd').textContent='第 '+(cur+1)+'/'+NL+' 关 ▾';$('st').textContent='★ '+done.size;lock=false}
+function win(){if(lock)return;lock=true;if(L_)L_.on=false;done.add(cur);save();beep(523,.1);setTimeout(()=>beep(784,.2),120);
+ $('st').textContent='★ '+done.size;const last=cur===NL-1;mode=last?'end':'next';
+ $('oh').textContent=last?NL+' 关全部完成！':'太棒了！';$('op').textContent=last?'小猪拿到了 '+done.size+' 颗星星，小小思考家！':'第 '+(cur+1)+' 关完成，继续加油！';
+ $('ob').textContent=last?'从头再玩':'下一关';pp.classList.add('hop');setTimeout(()=>ov.hidden=false,350)}
+$('ob').textContent=cur?'继续第 '+(cur+1)+' 关':'开始玩';
+$('ob').onclick=()=>{ov.hidden=true;pp.classList.remove('hop');if(mode==='next')cur++;else if(mode==='end')cur=0;mode='play';save();load()};
+LV.forEach((_,k)=>{const b=document.createElement('b');b.textContent=k+1;b.onclick=()=>{cur=k;mode='play';sel.hidden=ov.hidden=true;pp.classList.remove('hop');save();load()};gr.appendChild(b)});
+$('rd').style.cursor='pointer';$('rd').onclick=()=>{[...gr.children].forEach((b,k)=>b.className=k===cur?'cur':done.has(k)?'on':'');sel.hidden=false};
+$('sb').onclick=()=>sel.hidden=true;$('rs').onclick=()=>{if(!L_)return;ov.hidden=sel.hidden=true;pp.classList.remove('hop');mode='play';load(true)};$('st').textContent='★ '+done.size;
+function pos(e){const r=C.getBoundingClientRect();return[(e.clientX-r.left)*W/r.width,(e.clientY-r.top)*H/r.height]}
+C.addEventListener('pointerdown',e=>{if(!L_||lock)return;C.setPointerCapture(e.pointerId);L_.down(pos(e))});
+C.addEventListener('pointermove',e=>{if(L_&&!lock&&L_.on)L_.move(pos(e))});
+['pointerup','pointercancel'].forEach(t=>C.addEventListener(t,e=>{if(L_&&!lock)L_.up(pos(e))}));
+function frame(){if(ACT==='c_'){bg();if(L_)L_.draw()}requestAnimationFrame(frame)}
 frame();
 
 })();
