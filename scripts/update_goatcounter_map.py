@@ -14,7 +14,7 @@ from urllib.parse import urlencode
 import pycountry
 import requests
 
-SITE = os.environ.get("GOATCOUNTER_SITE", "cherylcheng")
+SITE = os.environ.get("GOATCOUNTER_SITE", "schreibenspiel")
 TOKEN = os.environ.get("GOATCOUNTER_API_TOKEN")
 API = f"https://{SITE}.goatcounter.com/api/v0"
 # GoatCounter started long after 2000; this safely covers the site's full history.
