@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fetch all-time GoatCounter pageview and location statistics for a static map."""
+"""Fetch all-time GoatCounter pageview and location statistics for a static map.""" 
 
 from __future__ import annotations
 
