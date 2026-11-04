@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-<title>小猪画画 · 握笔 专注力 逻辑</title>
+<title>小猪画画 · 像素握笔练习</title>
 <style>
 :root{--pk:#f8a5c2;--dk:#e0568f;--ink:#4a2a3c;--sky:#8fd3ff}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
@@ -18,8 +18,8 @@ button:focus-visible{outline:4px solid #ffd23f}
 .tab.on{background:var(--dk);color:#fff;text-shadow:2px 2px 0 var(--ink)}
 section{display:flex;flex-direction:column;align-items:center;gap:6px;width:100%}
 section[hidden]{display:none}
-#s1{--w:min(96vw,calc((100vh - 176px)*.72))}
-#s2,#s3{--w:min(98vw,calc((100vh - 164px)*1.6))}
+#s1{--w:min(96vw,calc((100vh - 214px)*.72))}
+#s2,#s3{--w:min(98vw,calc((100vh - 202px)*1.6))}
 .hud,.tip,.box{width:var(--w)}
 .hud{display:flex;justify-content:space-between;align-items:center;gap:8px}
 .chip{background:#fff;border:4px solid var(--ink);box-shadow:4px 4px 0 var(--ink);padding:3px 12px;font-weight:900;font-size:clamp(14px,2.4vw,22px)}
@@ -49,10 +49,12 @@ canvas.pp.hop{animation:hop .5s steps(4) infinite}
 .grid b.on{background:var(--pk)}.grid b.cur{background:#ffd23f}
 .sel .card{max-width:none;width:100%;max-height:100%;overflow:auto;padding:10px}.sel h1{font-size:20px}
 @media (prefers-reduced-motion:reduce){canvas.pp.hop{animation:none}}
+#lang{display:flex;gap:6px}.lg{font-size:clamp(13px,2.2vw,18px);padding:2px 12px;margin:0;background:#fff;color:var(--ink)}.lg.on{background:#ffd23f;color:var(--ink)}.spk{cursor:pointer;background:#fff}
 </style>
 </head>
 <body>
-<nav id="tabs"><button class="tab" data-p="a_">阶段一 · 描线启蒙</button><button class="tab" data-p="b_">阶段二 · 控笔与专注力</button><button class="tab" data-p="c_">阶段三 · 逻辑与思维</button></nav>
+<div id="lang"><button class="lg on" data-l="zh">中文</button><button class="lg" data-l="de">Deutsch</button><button class="lg" data-l="en">English</button></div>
+<nav id="tabs"><button class="tab" data-p="a_" data-t="阶段一 · 描线启蒙">阶段一 · 描线启蒙</button><button class="tab" data-p="b_" data-t="阶段二 · 控笔与专注力">阶段二 · 控笔与专注力</button><button class="tab" data-p="c_" data-t="阶段三 · 逻辑与思维">阶段三 · 逻辑与思维</button></nav>
 <section id="s1"></section>
 <section id="s2" hidden></section>
 <section id="s3" hidden></section>
@@ -61,12 +63,44 @@ const ls={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k
 let AC;function beep(f=660,t=.12){try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();const o=AC.createOscillator(),g=AC.createGain();o.type='square';o.frequency.value=f;g.gain.value=.05;o.connect(g);g.connect(AC.destination);o.start();o.stop(AC.currentTime+t)}catch(e){}}
 const rngSeed=s=>()=>{s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
 function seeded(sd,f){const o=Math.random;Math.random=rngSeed(sd);try{return f()}finally{Math.random=o}}
+let LANG='zh';const TX=new Set(),SPQ=[],trc=new Map(),SPK={zh:'zh-CN',de:'de-DE',en:'en-US'};
+const DI={"小猪画画": ["Schweinchen malt", "Piggy Draws"], "↻ 重来": ["↻ Neustart", "↻ Retry"], "📱 把平板横过来玩更舒服": ["📱 Tablet quer halten – so spielt es sich besser", "📱 Turn your tablet sideways for a better view"], "选关（粉色=已完成）": ["Level wählen (rosa = geschafft)", "Choose level (pink = done)"], "关闭": ["Schließen", "Close"], "开始玩": ["Los geht’s", "Start"], "下一关": ["Nächstes Level", "Next level"], "从头再玩": ["Nochmal von vorn", "Play again"], "太棒了！": ["Super gemacht!", "Great job!"], "手指好灵活！": ["so flinke Finger!", "what nimble fingers!"], "控笔小达人！": ["ein Stift-Profi!", "a pen-control pro!"], "小小思考家！": ["ein kleiner Denker!", "a little thinker!"], "阶段一 · 描线启蒙": ["Stufe 1 · Linien nachziehen", "Stage 1 · Line tracing"], "阶段二 · 控笔与专注力": ["Stufe 2 · Stiftkontrolle & Konzentration", "Stage 2 · Pen control & focus"], "阶段三 · 逻辑与思维": ["Stufe 3 · Logik & Denken", "Stage 3 · Logic & thinking"], "阶段一：描线启蒙": ["Stufe 1: Linien nachziehen", "Stage 1: Line tracing"], "阶段二：控笔与专注力": ["Stufe 2: Stiftkontrolle & Konzentration", "Stage 2: Pen control & focus"], "阶段三：逻辑与思维": ["Stufe 3: Logik & Denken", "Stage 3: Logic & thinking"], "去阶段二 →": ["Zu Stufe 2 →", "Go to Stage 2 →"], "← 阶段一": ["← Stufe 1", "← Stage 1"], "去阶段三 →": ["Zu Stufe 3 →", "Go to Stage 3 →"], "← 回到阶段二": ["← Zurück zu Stufe 2", "← Back to Stage 2"], "用拇指、食指和中指轻轻捏住笔，像捏着一只小鸡，别捏太紧哦！": ["Halte den Stift locker mit Daumen, Zeige- und Mittelfinger – als hieltest du ein Küken. Nicht zu fest drücken!", "Hold the pen lightly with your thumb, index and middle finger, as if holding a little chick. Don’t squeeze too hard!"], "12 种题型 × 10 题，打乱顺序出现，越往后越复杂。握笔时手腕放松，慢慢来！": ["12 Aufgabentypen × 10 Aufgaben, bunt gemischt und immer kniffliger. Handgelenk locker lassen und in Ruhe arbeiten!", "12 task types × 10 tasks, shuffled and getting harder. Relax your wrist and take your time!"], "16 种题型 × 10 题，有拼图、找规律、数数、空间想象……打乱顺序出现，越往后越难。慢慢想，不着急！": ["16 Aufgabentypen × 10 Aufgaben: Puzzles, Muster, Zählen, räumliches Denken … bunt gemischt und immer schwieriger. Lass dir Zeit!", "16 task types × 10 tasks: puzzles, patterns, counting, spatial thinking … shuffled and getting harder. Think it through, no rush!"], "画圈圈": ["Kreise malen", "Draw circles"], "沿着虚线，按住小猪画一个大圈圈": ["Halte das Schweinchen fest und male entlang der Linie einen großen Kreis", "Hold the little pig and draw a big circle along the dotted line"], "之字线": ["Zickzack-Linie", "Zigzag line"], "从左到右，一笔画出之字": ["Von links nach rechts in einem Zug im Zickzack malen", "Draw the zigzag in one stroke from left to right"], "波浪线": ["Wellenlinie", "Wavy line"], "像小船一样沿着波浪划": ["Folge den Wellen wie ein kleines Boot", "Follow the waves like a little boat"], "蜗牛圈": ["Schneckenspirale", "Snail spiral"], "从外圈一圈圈画到中间": ["Von außen Runde für Runde bis in die Mitte malen", "Draw round and round from the outside to the middle"], "小房子": ["Häuschen", "Little house"], "按数字顺序连成小房子": ["Verbinde die Punkte der Reihe nach zu einem Häuschen", "Connect the dots in number order to make a little house"], "五角星": ["Stern", "Star"], "按数字顺序一笔画出星星": ["Zeichne den Stern in einem Zug, den Zahlen nach", "Draw the star in one stroke, following the numbers"], "三角形": ["Dreieck", "Triangle"], "按数字顺序连成三角形": ["Verbinde die Punkte der Reihe nach zu einem Dreieck", "Connect the dots in number order to make a triangle"], "正方形": ["Quadrat", "Square"], "按数字顺序连成正方形": ["Verbinde die Punkte der Reihe nach zu einem Quadrat", "Connect the dots in number order to make a square"], "菱形": ["Raute", "Diamond"], "按数字顺序连成菱形": ["Verbinde die Punkte der Reihe nach zu einer Raute", "Connect the dots in number order to make a diamond"], "汉字": ["Schriftzeichen", "Chinese character"], "走迷宫": ["Labyrinth", "Maze"], "按住小猪，走到泥坑里玩耍": ["Halte das Schweinchen fest und führe es zur Matschpfütze", "Hold the little pig and lead it to the mud puddle"], "找朋友": ["Freunde finden", "Find the friends"], "拖线连到一样的朋友": ["Ziehe eine Linie zum gleichen Freund", "Drag a line to the matching friend"], "数字找对应数量的星星": ["Verbinde die Zahl mit der passenden Anzahl Sterne", "Match each number with the right number of stars"], "大写字母找小写字母": ["Verbinde Großbuchstaben mit Kleinbuchstaben", "Match capital letters with small letters"], "阿拉伯数字找汉字数字": ["Verbinde arabische Ziffern mit chinesischen Zahlzeichen", "Match digits with Chinese numerals"], "数字连点": ["Zahlen verbinden", "Number dots"], "从 1 开始，按数字顺序一个个连起来": ["Beginne bei 1 und verbinde die Punkte der Zahlen nach", "Start at 1 and connect the dots in number order"], "字母连点": ["Buchstaben verbinden", "Letter dots"], "从 A 开始，按字母顺序一个个连起来": ["Beginne bei A und verbinde die Punkte in Alphabet-Reihenfolge", "Start at A and connect the dots in alphabet order"], "起点": ["Start", "Start"], "终点": ["Ziel", "Finish"], "出口": ["Ausgang", "Exit"], "先选一支彩笔 ↓": ["Wähle zuerst einen Stift ↓", "Pick a pen first ↓"], "直线": ["Gerade", "Straight"], "虚线": ["Gestrichelt", "Dashed"], "锯齿线": ["Zickzack", "Zigzag"], "电话线": ["Telefonkabel", "Phone cord"], "颜色找路": ["Farben-Weg", "Colour path"], "形状找路": ["Formen-Weg", "Shape path"], "字母顺序": ["Buchstaben-Reihe", "Letter order"], "按上面颜色的顺序，一格一格走到终点（颜色会重复出现）": ["Folge der Farbreihenfolge oben, Feld für Feld, bis zum Ziel (die Farben wiederholen sich)", "Follow the colour order above, square by square, to the finish (the colours repeat)"], "按上面形状的顺序，一格一格走到终点（形状会重复出现）": ["Folge der Formenreihenfolge oben, Feld für Feld, bis zum Ziel (die Formen wiederholen sich)", "Follow the shape order above, square by square, to the finish (the shapes repeat)"], "按字母表的顺序 A→B→C，一格一格走到终点": ["Folge dem Alphabet A→B→C, Feld für Feld, bis zum Ziel", "Follow the alphabet A→B→C, square by square, to the finish"], "描发丝": ["Haare nachzeichnen", "Trace the hair"], "沿着虚线，把每一根头发从上到下描出来": ["Fahre jede Haarsträhne entlang der Linie von oben nach unten nach", "Trace every strand of hair along the dotted line, from top to bottom"], "颜色连线": ["Farbe & Zahl", "Colour & number"], "看数字对应的颜色，按顺序把圆点连起来": ["Schau, welche Farbe zu welcher Zahl gehört, und verbinde die Punkte der Reihe nach", "Look at the colour for each number and connect the dots in order"], "红绿灯": ["Ampel", "Traffic lights"], "绿灯连成线，遇到红灯要绕开，不能碰到": ["Verbinde die grünen Punkte, umfahre die roten – nicht berühren!", "Connect the green lights, go around the red ones – don’t touch them!"], "数字涂色": ["Zahlen ausmalen", "Colour by number"], "先选彩笔，再按数字涂上对应的颜色": ["Wähle erst einen Buntstift, dann male jede Zahl in der passenden Farbe aus", "Pick a pen first, then colour each number with its matching colour"], "开口涂色": ["Öffnung ausmalen", "Colour the opening"], "看开口朝哪，涂上对应的颜色": ["Schau, wohin die Öffnung zeigt, und male in der passenden Farbe", "Look where the opening points and colour it with the matching colour"], "线条画画": ["Linien zeichnen", "Draw lines"], "看颜色，在色条里画出对应的线": ["Schau auf die Farbe und zeichne im Farbstreifen die passende Linie", "Look at the colour and draw the matching line in the bar"], "画箭头": ["Pfeile zeichnen", "Draw arrows"], "看颜色，在方框里画出对应的箭头": ["Schau auf die Farbe und zeichne im Kästchen den passenden Pfeil", "Look at the colour and draw the matching arrow in the box"], "画图形": ["Formen zeichnen", "Draw shapes"], "看颜色，给圆点画上对应的图形": ["Schau auf die Farbe und zeichne die passende Form auf den Punkt", "Look at the colour and draw the matching shape on the dot"], "圆圈迷宫": ["Kreis-Labyrinth", "Round maze"], "按住小猪，从中间走出迷宫，到外面的泥坑": ["Halte das Schweinchen fest und führe es aus der Mitte heraus zur Matschpfütze", "Hold the little pig and lead it out of the maze to the mud puddle outside"], "字母找路": ["Buchstaben-Weg", "Letter path"], "沿着相同的字母（大小写都算），一格一格连到终点，只有一条路": ["Folge dem gleichen Buchstaben (groß und klein), Feld für Feld bis zum Ziel – es gibt nur einen Weg", "Follow the same letter (capital or small), square by square to the finish – there is only one path"], "顺序找路": ["Reihenfolge-Weg", "Pattern path"], "看上面的顺序，按顺序一格一格走到终点": ["Folge der Reihenfolge oben, Feld für Feld, bis zum Ziel", "Follow the order above, square by square, to the finish"], "连点成画": ["Punkte zum Bild", "Dot-to-dot picture"], "按数字顺序，把点点连起来": ["Verbinde die Punkte der Reihe nach", "Connect the dots in number order"], "把小块拖进轮廓里拼满；点一下小块可以转方向": ["Ziehe die Teile in die Umrisse, bis alles gefüllt ist; Antippen dreht ein Teil", "Drag the pieces into the outline until it is full; tap a piece to rotate it"], "把小块拖进轮廓里拼满，点一下小块可以转方向": ["Ziehe die Teile in die Umrisse, bis alles gefüllt ist; Antippen dreht ein Teil", "Drag the pieces into the outline until it is full; tap a piece to rotate it"], "小朋友在照镜子，镜子里的样子是哪一个？": ["Das Kind schaut in den Spiegel – welches Bild zeigt das Spiegelbild?", "The child is looking in the mirror – which picture shows the reflection?"], "镜子": ["Spiegel", "Mirror"], "根据例图，是哪个小朋友看到的？": ["Welches Kind sieht das Bild von rechts?", "Which child sees the example picture?"], "例图": ["Beispiel", "Example"], "下雨": ["Regen", "Rain"], "带雨伞": ["Regenschirm", "Umbrella"], "晴天": ["Sonne", "Sunny"], "戴太阳镜": ["Sonnenbrille", "Sunglasses"], "下雪": ["Schnee", "Snow"], "戴手套": ["Handschuhe", "Gloves"], "晚上": ["Abend", "Evening"], "去睡觉": ["Schlafen gehen", "Go to bed"], "很热": ["heiß", "Hot"], "吃冰淇淋": ["Eis essen", "Eat ice cream"], "很冷": ["kalt", "Cold"], "穿外套": ["Jacke anziehen", "Put on a coat"], "困了": ["müde", "Sleepy"], "抱小熊": ["Teddy knuddeln", "Hug the teddy"], "难过": ["traurig", "Sad"], "抱一抱": ["Umarmung", "A hug"], "玩皮球": ["Ball spielen", "Play ball"], "喝水": ["Wasser trinken", "Drink water"], "看书": ["Buch lesen", "Read a book"], "先看规则，再选出正确答案": ["Lies zuerst die Regeln, dann wähle die richtige Antwort", "Read the rules first, then pick the right answer"], "请选出正确答案": ["Wähle die richtige Antwort", "Choose the right answer"], "把图块和图案配成一对：四个角的颜色要一样": ["Ordne Kachel und Muster einander zu: die Farben der vier Ecken müssen gleich sein", "Match the tile with the pattern: the four corner colours must be the same"], "到哪里？": ["Wo kommst du an?", "Where do you end up?"], "数一数，把数字填进圈圈里": ["Zähle und schreibe die Zahlen in die Kreise", "Count and write the numbers in the circles"], "数一数，各种形状有几个？": ["Zähle: Wie viele von jeder Form gibt es?", "Count: how many of each shape are there?"], "把数量相同的图画、数字、点点用线连起来": ["Verbinde Bilder, Zahlen und Punkte mit gleicher Anzahl durch Linien", "Connect pictures, numbers and dots with the same amount"], "正方体展开图折起来后，问号处是哪个图案？先点正方体，再点下面的图案": ["Das Netz wird zum Würfel gefaltet: Welches Bild gehört an die Stelle des Fragezeichens? Tippe erst auf den Würfel, dann auf das Bild unten", "The net is folded into a cube: which picture goes where the question mark is? Tap the cube first, then the picture below"], "展开图": ["Würfelnetz", "Cube net"], "找规律，填出缺少的数字": ["Finde das Muster und trage die fehlenden Zahlen ein", "Find the pattern and fill in the missing numbers"], "找规律，接下来应该是什么？": ["Finde das Muster: Was kommt als Nächstes?", "Find the pattern: what comes next?"], "沿着虚线，把点数和对应的数字连起来": ["Folge den gestrichelten Linien und verbinde die Punkte mit der passenden Zahl", "Follow the dotted lines and connect the dots to the matching number"], "认识数轴：箭头指着的数字是多少？": ["Zahlenstrahl: Welche Zahl zeigt der Pfeil?", "Number line: which number does the arrow point to?"], "拼图": ["Puzzle", "Puzzle"], "镜像": ["Spiegelbild", "Mirror image"], "小朋友在照镜子，找出镜子里的样子": ["Das Kind steht vor dem Spiegel – finde das Spiegelbild", "The child is in front of the mirror – find the reflection"], "视角": ["Perspektive", "Point of view"], "根据例图，找出是哪个小朋友看到的": ["Finde das Kind, das das Beispielbild sieht", "Find the child who sees the example picture"], "条件判断": ["Wenn-dann", "If-then"], "先看规则，再按条件选出正确答案": ["Lies erst die Regeln, dann wähle nach der Bedingung die richtige Antwort", "Read the rules first, then choose the right answer for the condition"], "类比推理": ["Analogien", "Analogies"], "找出前后相同的关系，选出最合适的答案": ["Finde die gleiche Beziehung und wähle die passende Antwort", "Find the same relationship and pick the best answer"], "圆圈矩阵": ["Farbkreis-Matrix", "Circle matrix"], "把图块和图案配对，四个角的颜色要一样": ["Ordne Kachel und Muster zu – die vier Eckfarben müssen gleich sein", "Match tile and pattern – the four corner colours must be the same"], "箭头找答案": ["Pfeil-Weg", "Follow the arrows"], "从起点出发，按箭头一步一步走，点出终点": ["Starte am Startpunkt, folge den Pfeilen Schritt für Schritt und tippe das Ziel an", "Start at the start, follow the arrows step by step and tap where you end up"], "数的分合": ["Zahlen zerlegen", "Number bonds"], "哪组最多": ["Wo ist mehr?", "Which has most?"], "数一数，点出数量最多（或最少）的一组": ["Zähle und tippe die Gruppe mit den meisten (oder wenigsten) an", "Count and tap the group with the most (or fewest)"], "数形状": ["Formen zählen", "Count the shapes"], "数一数，各种形状有几个": ["Zähle, wie viele von jeder Form es gibt", "Count how many of each shape there are"], "数量连线": ["Mengen verbinden", "Match the amounts"], "把数量相同的图画、数字、点点连起来": ["Verbinde Bilder, Zahlen und Punkte mit gleicher Anzahl", "Connect pictures, numbers and dots with the same amount"], "空间思维": ["Räumliches Denken", "Spatial thinking"], "看展开图，想一想正方体上的问号是哪个图案": ["Schau dir das Netz an: Welches Bild gehört zum Fragezeichen auf dem Würfel?", "Look at the net: which picture belongs where the question mark is on the cube?"], "上下楼梯": ["Treppenzahlen", "Number stairs"], "图形交替": ["Formenmuster", "Shape patterns"], "找规律，选出接下来的图形": ["Finde das Muster und wähle die nächste Form", "Find the pattern and pick the next shape"], "虚线连线": ["Linien folgen", "Follow the lines"], "认识数轴": ["Zahlenstrahl", "Number line"], "看箭头指着数轴上的哪个数字": ["Welche Zahl auf dem Zahlenstrahl zeigt der Pfeil?", "Which number on the number line does the arrow point to?"]};
+const CO={'下雨':['es regnet','it rains'],'晴天':['die Sonne scheint','it is sunny'],'下雪':['es schneit','it snows'],'晚上':['es Abend ist','it is evening'],'很热':['es heiß ist','it is hot'],'很冷':['es kalt ist','it is cold'],'困了':['man müde ist','you are sleepy'],'难过':['man traurig ist','you are sad']};
+const RE_={'带雨伞':['nimm einen Regenschirm mit','take an umbrella'],'戴太阳镜':['setz eine Sonnenbrille auf','put on sunglasses'],'戴手套':['zieh Handschuhe an','wear gloves'],'去睡觉':['geh schlafen','go to bed'],'吃冰淇淋':['iss ein Eis','eat ice cream'],'穿外套':['zieh eine Jacke an','put on a coat'],'抱小熊':['kuschle mit dem Teddy','cuddle the teddy bear'],'抱一抱':['lass dich umarmen','get a hug']};
+function tr2(s){const j=LANG==='de'?0:1,g=(k,t)=>(t||DI)[k]?(t||DI)[k][j]:k;let m;
+ if(DI[s])return DI[s][j];
+ if(m=s.match(/^第 (\d+)(?:\/(\d+))? 关 ▾$/))return'Level '+m[1]+(m[2]?'/'+m[2]:'')+' ▾';
+ if(m=s.match(/^继续第 (\d+) 关$/))return j?'Continue with level '+m[1]:'Weiter mit Level '+m[1];
+ if(m=s.match(/^第 (\d+) 关完成，继续加油！$/))return j?'Level '+m[1]+' complete – keep going!':'Level '+m[1]+' geschafft – weiter so!';
+ if(m=s.match(/^(\d+) 关全部完成！$/))return j?'All '+m[1]+' levels complete!':'Alle '+m[1]+' Level geschafft!';
+ if(m=s.match(/^小猪拿到了 (\d+) 颗星星，(.+)$/))return j?'The little pig collected '+m[1]+' stars – '+g(m[2]):'Das Schweinchen hat '+m[1]+' Sterne gesammelt – '+g(m[2]);
+ if(m=s.match(/^数字 (\d+)$/))return(j?'Number ':'Zahl ')+m[1];
+ if(m=s.match(/^描一描数字 (\d+)$/))return j?'Trace the number '+m[1]:'Fahre die Zahl '+m[1]+' nach';
+ if(m=s.match(/^字母 (.)$/))return(j?'Letter ':'Buchstabe ')+m[1];
+ if(m=s.match(/^描一描大写字母 (.)$/))return j?'Trace the capital letter '+m[1]:'Fahre den Großbuchstaben '+m[1]+' nach';
+ if(m=s.match(/^描一描汉字「(.)」，注意笔画顺序$/))return j?'Trace the character 「'+m[1]+'」 – mind the stroke order':'Fahre das Schriftzeichen 「'+m[1]+'」 nach – achte auf die Strichfolge';
+ if(m=s.match(/^字母顺序：(.*)$/))return(j?'Letter order: ':'Buchstabenfolge: ')+m[1];
+ if(m=s.match(/^如果(.+)，就(.+)$/))return(j?'If ':'Wenn ')+g(m[1],CO)+', '+g(m[2],RE_)+'.';
+ if(m=s.match(/^今天(.+)啦！小兔应该（　）？$/))return j?'Today: '+g(m[1])+'! What should the bunny do?':'Heute: '+g(m[1])+'! Was soll das Häschen tun?';
+ if(m=s.match(/^小兔(.+)了，今天是（　）？$/))return j?'The bunny did this: '+g(m[1])+'. What is today like?':'Das Häschen hat das getan: '+g(m[1])+'. Wie ist es heute?';
+ if(m=s.match(/^哪一组的数量(最少|最多)？请点出来$/))return j?'Which group has the '+(m[1]==='最少'?'fewest':'most')+'? Tap it.':'Welche Gruppe hat '+(m[1]==='最少'?'die wenigsten':'die meisten')+'? Tippe darauf.';
+ return s}
+function tr(s){if(LANG==='zh'||typeof s!=='string'||!/[\u4e00-\u9fff]/.test(s))return s;const k=LANG+'|'+s;let v=trc.get(k);if(v===undefined){v=tr2(s);trc.set(k,v)}return v}
+function setT(e,z){if(!e)return;e._zh=z;TX.add(e);e.textContent=tr(z)}
+function reg(root){root.querySelectorAll('[data-t]').forEach(e=>{e._zh=e.dataset.t;TX.add(e)})}
+function applyLang(l){LANG=l;try{document.documentElement.lang={zh:'zh-CN',de:'de',en:'en'}[l]}catch(e){}document.querySelectorAll('.lg').forEach(b=>b.classList.toggle('on',b.dataset.l===l));TX.forEach(e=>{e.textContent=tr(e._zh)});try{speechSynthesis.cancel()}catch(e){}}
+function speak(P){try{const ss=window.speechSynthesis;if(!ss)return;ss.cancel();const tip=document.getElementById(P+'tip').textContent,out=[tip],seen=new Set([tip]);
+ if(P!=='a_')[...SPQ].sort((a,b)=>a[0]-b[0]||a[1]-b[1]).forEach(([y,x,t])=>{if(!seen.has(t)&&!tip.includes(t)&&!t.includes(tip)){seen.add(t);out.push(t)}});
+ const u=new SpeechSynthesisUtterance(out.join(LANG==='zh'?'。':'. '));u.lang=SPK[LANG];u.rate=.9;ss.speak(u)}catch(e){}}
+
 let ACT=['a_','b_','c_'].includes(ls.get('pp_phase'))?ls.get('pp_phase'):'a_';
-const TPL=(P,w,h,h1,intro,lk)=>`<div class="hud"><div class="chip title" id="${P}title">小猪画画</div><div class="chip" id="${P}rd">第 1 关 ▾</div><div class="chip rs" id="${P}rs">↻ 重来</div><div class="chip" id="${P}st">★ 0</div></div>${P!=='a_'?'<div class="rot">📱 把平板横过来玩更舒服</div>':''}<div class="tip" id="${P}tip"></div><div class="box"><canvas class="cv" id="${P}c" width="${w}" height="${h}"></canvas><div class="ov" id="${P}ov"><div class="card"><canvas class="pp" id="${P}pp"></canvas><h1 id="${P}oh">${h1}</h1><p id="${P}op">${intro}</p><button id="${P}ob">开始玩</button><p>${lk.map(([g,t])=>`<a href="#" data-go="${g}">${t}</a>`).join(' · ')}</p></div></div><div class="sel" id="${P}sel" hidden><div class="card"><h1>选关（粉色=已完成）</h1><div class="grid" id="${P}grid"></div><button id="${P}sb">关闭</button></div></div></div>`;
+const TPL=(P,w,h,h1,intro,lk)=>`<div class="hud"><div class="chip title" id="${P}title" data-t="小猪画画">小猪画画</div><div class="chip" id="${P}rd" data-t="第 1 关 ▾">第 1 关 ▾</div><div class="chip rs" id="${P}rs" data-t="↻ 重来">↻ 重来</div><div class="chip spk" id="${P}spk">🔊</div><div class="chip" id="${P}st">★ 0</div></div>${P!=='a_'?'<div class="rot" data-t="📱 把平板横过来玩更舒服">📱 把平板横过来玩更舒服</div>':''}<div class="tip" id="${P}tip"></div><div class="box"><canvas class="cv" id="${P}c" width="${w}" height="${h}"></canvas><div class="ov" id="${P}ov"><div class="card"><canvas class="pp" id="${P}pp"></canvas><h1 id="${P}oh" data-t="${h1}">${h1}</h1><p id="${P}op" data-t="${intro}">${intro}</p><button id="${P}ob" data-t="开始玩">开始玩</button><p>${lk.map(([g,t])=>`<a href="#" data-go="${g}" data-t="${t}">${t}</a>`).join(' · ')}</p></div></div><div class="sel" id="${P}sel" hidden><div class="card"><h1 data-t="选关（粉色=已完成）">选关（粉色=已完成）</h1><div class="grid" id="${P}grid"></div><button id="${P}sb" data-t="关闭">关闭</button></div></div></div>`;
 document.getElementById('s1').innerHTML=TPL('a_',360,500,'阶段一：描线启蒙','用拇指、食指和中指轻轻捏住笔，像捏着一只小鸡，别捏太紧哦！',[['b_','去阶段二 →']]);
-document.getElementById('s2').innerHTML=TPL('b_',960,600,'阶段二：控笔与专注力','12 种题型打乱顺序出现，越往后越复杂。握笔时手腕放松，慢慢来！',[['a_','← 阶段一'],['c_','去阶段三 →']]);
-document.getElementById('s3').innerHTML=TPL('c_',960,600,'阶段三：逻辑与思维','16 种题型有拼图、找规律、数数、空间想象……打乱顺序出现，越往后越难。慢慢想，不着急！',[['b_','← 回到阶段二']]);
-function phase(p){ACT=p;ls.set('pp_phase',p);document.getElementById('s1').hidden=p!=='a_';document.getElementById('s2').hidden=p!=='b_';document.getElementById('s3').hidden=p!=='c_';document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on',b.dataset.p===p))}
+document.getElementById('s2').innerHTML=TPL('b_',960,600,'阶段二：控笔与专注力','12 种题型 × 10 题，打乱顺序出现，越往后越复杂。握笔时手腕放松，慢慢来！',[['a_','← 阶段一'],['c_','去阶段三 →']]);
+document.getElementById('s3').innerHTML=TPL('c_',960,600,'阶段三：逻辑与思维','16 种题型 × 10 题，有拼图、找规律、数数、空间想象……打乱顺序出现，越往后越难。慢慢想，不着急！',[['b_','← 回到阶段二']]);
+reg(document);['a_','b_','c_'].forEach(P=>{const b=document.getElementById(P+'spk');if(b)b.onclick=()=>speak(P)});
+document.querySelectorAll('.lg').forEach(b=>b.onclick=()=>applyLang(b.dataset.l));
+function phase(p){SPQ.length=0;ACT=p;ls.set('pp_phase',p);document.getElementById('s1').hidden=p!=='a_';document.getElementById('s2').hidden=p!=='b_';document.getElementById('s3').hidden=p!=='c_';document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on',b.dataset.p===p))}
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>phase(b.dataset.p));
 document.querySelectorAll('[data-go]').forEach(x=>x.onclick=e=>{e.preventDefault();phase(x.dataset.go)});
 
@@ -192,20 +226,20 @@ const ls={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k
 let cur=Math.min(+ls.get('pp_cur')||0,99),done=new Set(JSON.parse(ls.get('pp_done')||'[]')),L=null,lock=true,mode='start';
 const save=()=>{ls.set('pp_cur',cur);ls.set('pp_done',JSON.stringify([...done]))};
 pp.width=104;pp.height=104;spr(pp.getContext('2d'),'pig',52,52,8);
-let sd=0;function load(rt){const v=LV[cur];if(!rt)sd=Math.random()*1e9|0;L=seeded(sd,v.f);$('tip').textContent=v.t;$('title').textContent=v.n;$('rd').textContent='第 '+(cur+1)+' 关 ▾';$('st').textContent='★ '+done.size;lock=false}
+let sd=0;function load(rt){const v=LV[cur];if(!rt)sd=Math.random()*1e9|0;L=seeded(sd,v.f);setT($('tip'),v.t);setT($('title'),v.n);setT($('rd'),'第 '+(cur+1)+' 关 ▾');setT($('st'),'★ '+done.size);lock=false}
 function win(){if(lock)return;lock=true;L.on=false;done.add(cur);save();beep(523,.1);setTimeout(()=>beep(784,.2),120);
- $('st').textContent='★ '+done.size;const last=cur===99;mode=last?'end':'next';
- $('oh').textContent=last?'100 关全部完成！':'太棒了！';
- $('op').textContent=last?'小猪拿到了 '+done.size+' 颗星星，手指好灵活！':'第 '+(cur+1)+' 关完成，继续加油！';
- $('ob').textContent=last?'从头再玩':'下一关';pp.classList.add('hop');setTimeout(()=>ov.hidden=false,350)}
-$('ob').textContent=cur?'继续第 '+(cur+1)+' 关':'开始玩';
+ setT($('st'),'★ '+done.size);const last=cur===99;mode=last?'end':'next';
+ setT($('oh'),last?'100 关全部完成！':'太棒了！');
+ setT($('op'),last?'小猪拿到了 '+done.size+' 颗星星，手指好灵活！':'第 '+(cur+1)+' 关完成，继续加油！');
+ setT($('ob'),last?'从头再玩':'下一关');pp.classList.add('hop');setTimeout(()=>ov.hidden=false,350)}
+setT($('ob'),cur?'继续第 '+(cur+1)+' 关':'开始玩');
 $('ob').onclick=()=>{ov.hidden=true;pp.classList.remove('hop');if(mode==='next')cur++;else if(mode==='end')cur=0;mode='play';save();load()};
 LV.forEach((_,k)=>{const b=document.createElement('b');b.textContent=k+1;b.onclick=()=>{cur=k;mode='play';sel.hidden=ov.hidden=true;pp.classList.remove('hop');save();load()};gr.appendChild(b)});
 $('rd').style.cursor='pointer';
 $('rd').onclick=()=>{[...gr.children].forEach((b,k)=>b.className=k===cur?'cur':done.has(k)?'on':'');sel.hidden=false};
 $('sb').onclick=()=>sel.hidden=true;
 $('rs').onclick=()=>{if(!L)return;ov.hidden=sel.hidden=true;pp.classList.remove('hop');mode='play';load(true)};
-$('st').textContent='★ '+done.size;
+setT($('st'),'★ '+done.size);
 function pos(e){const r=C.getBoundingClientRect();return[(e.clientX-r.left)*W/r.width,(e.clientY-r.top)*H/r.height]}
 C.addEventListener('pointerdown',e=>{if(!L||lock)return;C.setPointerCapture(e.pointerId);L.down(pos(e))});
 C.addEventListener('pointermove',e=>{if(L&&!lock&&L.on)L.move(pos(e))});
@@ -224,7 +258,7 @@ mud:["..mmmmmm..",".mmmmmmmm.","mmmmmmmmmm",".mmmmmmmm."]};
 function spr(ctx,n,cx,cy,s){const r=SP[n],w=r[0].length,h=r.length,x0=Math.round(cx-w*s/2),y0=Math.round(cy-h*s/2);r.forEach((row,j)=>[...row].forEach((ch,i)=>{if(ch!=='.'){ctx.fillStyle=PAL[ch];ctx.fillRect(x0+i*s,y0+j*s,s,s)}}))}
 const d=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1]),R=(a,b)=>a+Math.random()*(b-a),ri=n=>Math.random()*n|0,sh=a=>[...a].sort(()=>Math.random()-.5);
 const CL=['#d64541','#3a86d8','#f2d14b','#6ab04c','#d56fa8','#e08a2e'],INK='#4a2a3c',TP=Math.PI*2;
-function T(s,x,y,z,c,f){X.fillStyle=c||INK;X.font=(f||'900 '+z+'px sans-serif');X.textAlign='center';X.textBaseline='middle';X.fillText(s,x,y+1)}
+function T(s,x,y,z,c,f,mw){const t=tr(String(s)),F=f||'900 '+z+'px sans-serif';X.fillStyle=c||INK;X.font=F;X.textAlign='center';X.textBaseline='middle';if(t!==String(s)){const w=X.measureText(t).width,m=mw||900;if(w>m)X.font=F.replace(/\d+(\.\d+)?px/,Math.max(9,(parseFloat(F.match(/(\d+(\.\d+)?)px/)[1])*m/w)).toFixed(1)+'px')}X.fillText(t,x,y+1);if(t.length>=4&&/[A-Za-zÄÖÜäöüß\u4e00-\u9fff]{3,}/.test(t))SPQ.push([y,x,t])}
 function O(x,y,r,f,s,w){X.beginPath();X.arc(x,y,r,0,7);if(f){X.fillStyle=f;X.fill()}if(s){X.strokeStyle=s;X.lineWidth=w||3;X.stroke()}}
 function L(a,w,c,dash){X.setLineDash(dash||[]);X.lineWidth=w;X.strokeStyle=c;X.lineCap=X.lineJoin='round';X.beginPath();a.forEach((q,k)=>k?X.lineTo(q[0],q[1]):X.moveTo(q[0],q[1]));X.stroke();X.setLineDash([])}
 function bg(){for(let y=0;y<H;y+=20)for(let x=0;x<W;x+=20){X.fillStyle=((x+y)/20)%2?'#c9efa6':'#bfe8a0';X.fillRect(x,y,20,20)}}
@@ -454,21 +488,21 @@ const ov=$('ov'),sel=$('sel'),pp=$('pp'),gr=$('grid'),ls={get(k){try{return loca
 let cur=Math.min(+ls.get('pp2_cur')||0,NL-1),done=new Set(JSON.parse(ls.get('pp2_done')||'[]')),L_=null,lock=true,mode='start';
 const save=()=>{ls.set('pp2_cur',cur);ls.set('pp2_done',JSON.stringify([...done]))};
 pp.width=104;pp.height=104;spr(pp.getContext('2d'),'pig',52,52,8);
-let sd=0;function load(rt){const v=LV[cur];if(!rt)sd=Math.random()*1e9|0;L_=seeded(sd,v.f);$('tip').textContent=L_.tip||v.t;$('title').textContent=L_.ttl||v.n;$('rd').textContent='第 '+(cur+1)+'/'+NL+' 关 ▾';$('st').textContent='★ '+done.size;lock=false}
+let sd=0;function load(rt){const v=LV[cur];if(!rt)sd=Math.random()*1e9|0;L_=seeded(sd,v.f);setT($('tip'),L_.tip||v.t);setT($('title'),L_.ttl||v.n);setT($('rd'),'第 '+(cur+1)+'/'+NL+' 关 ▾');setT($('st'),'★ '+done.size);lock=false}
 function win(){if(lock)return;lock=true;if(L_)L_.on=false;done.add(cur);save();beep(523,.1);setTimeout(()=>beep(784,.2),120);
- $('st').textContent='★ '+done.size;const last=cur===NL-1;mode=last?'end':'next';
- $('oh').textContent=last?NL+' 关全部完成！':'太棒了！';$('op').textContent=last?'小猪拿到了 '+done.size+' 颗星星，控笔小达人！':'第 '+(cur+1)+' 关完成，继续加油！';
- $('ob').textContent=last?'从头再玩':'下一关';pp.classList.add('hop');setTimeout(()=>ov.hidden=false,350)}
-$('ob').textContent=cur?'继续第 '+(cur+1)+' 关':'开始玩';
+ setT($('st'),'★ '+done.size);const last=cur===NL-1;mode=last?'end':'next';
+ setT($('oh'),last?NL+' 关全部完成！':'太棒了！');setT($('op'),last?'小猪拿到了 '+done.size+' 颗星星，控笔小达人！':'第 '+(cur+1)+' 关完成，继续加油！');
+ setT($('ob'),last?'从头再玩':'下一关');pp.classList.add('hop');setTimeout(()=>ov.hidden=false,350)}
+setT($('ob'),cur?'继续第 '+(cur+1)+' 关':'开始玩');
 $('ob').onclick=()=>{ov.hidden=true;pp.classList.remove('hop');if(mode==='next')cur++;else if(mode==='end')cur=0;mode='play';save();load()};
 LV.forEach((_,k)=>{const b=document.createElement('b');b.textContent=k+1;b.onclick=()=>{cur=k;mode='play';sel.hidden=ov.hidden=true;pp.classList.remove('hop');save();load()};gr.appendChild(b)});
 $('rd').style.cursor='pointer';$('rd').onclick=()=>{[...gr.children].forEach((b,k)=>b.className=k===cur?'cur':done.has(k)?'on':'');sel.hidden=false};
-$('sb').onclick=()=>sel.hidden=true;$('rs').onclick=()=>{if(!L_)return;ov.hidden=sel.hidden=true;pp.classList.remove('hop');mode='play';load(true)};$('st').textContent='★ '+done.size;
+$('sb').onclick=()=>sel.hidden=true;$('rs').onclick=()=>{if(!L_)return;ov.hidden=sel.hidden=true;pp.classList.remove('hop');mode='play';load(true)};setT($('st'),'★ '+done.size);
 function pos(e){const r=C.getBoundingClientRect();return[(e.clientX-r.left)*W/r.width,(e.clientY-r.top)*H/r.height]}
 C.addEventListener('pointerdown',e=>{if(!L_||lock)return;C.setPointerCapture(e.pointerId);L_.down(pos(e))});
 C.addEventListener('pointermove',e=>{if(L_&&!lock&&L_.on)L_.move(pos(e))});
 ['pointerup','pointercancel'].forEach(t=>C.addEventListener(t,e=>{if(L_&&!lock)L_.up(pos(e))}));
-function frame(){if(ACT==='b_'){bg();if(L_)L_.draw()}requestAnimationFrame(frame)}
+function frame(){if(ACT==='b_'){SPQ.length=0;bg();if(L_)L_.draw()}requestAnimationFrame(frame)}
 frame();
 
 })();
@@ -480,7 +514,7 @@ const PAL={p:'#f8a5c2',d:'#e0568f',k:'#2b2b2b',r:'#e63946'};
 const SP={pig:["..dd.....dd..",".dppd...dppd.",".dpppppppppd.","dpppppppppppd","dppkpppppkppd","dppkpppppkppd","dpppdddddpppd","dpppdkdkdpppd","dpppdddddpppd",".dpppppppppd.","..ddddddddd..","...rrrrrrr...","..rrrrrrrrr.."]};
 function spr(ctx,n,cx,cy,s){const r=SP[n],w=r[0].length,h=r.length,x0=Math.round(cx-w*s/2),y0=Math.round(cy-h*s/2);r.forEach((row,j)=>[...row].forEach((ch,i)=>{if(ch!=='.'){ctx.fillStyle=PAL[ch];ctx.fillRect(x0+i*s,y0+j*s,s,s)}}))}
 const d=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1]),R=(a,b)=>a+Math.random()*(b-a),ri=n=>Math.random()*n|0,sh=a=>[...a].sort(()=>Math.random()-.5);
-function T(s,x,y,z,c){X.fillStyle=c||INK;X.font='900 '+z+'px sans-serif';X.textAlign='center';X.textBaseline='middle';X.fillText(s,x,y+1)}
+function T(s,x,y,z,c,mw){const t=tr(String(s)),F='900 '+z+'px sans-serif';X.fillStyle=c||INK;X.font=F;X.textAlign='center';X.textBaseline='middle';if(t!==String(s)){const w=X.measureText(t).width,m=mw||900;if(w>m)X.font='900 '+Math.max(9,z*m/w).toFixed(1)+'px sans-serif'}X.fillText(t,x,y+1);if(t.length>=4&&/[A-Za-zÄÖÜäöüß\u4e00-\u9fff]{3,}/.test(t))SPQ.push([y,x,t])}
 function O(x,y,r,f,s,w){X.beginPath();X.arc(x,y,r,0,7);if(f){X.fillStyle=f;X.fill()}if(s){X.strokeStyle=s;X.lineWidth=w||3;X.stroke()}}
 function L(a,w,c,dash){X.setLineDash(dash||[]);X.lineWidth=w;X.strokeStyle=c;X.lineCap=X.lineJoin='round';X.beginPath();a.forEach((q,k)=>k?X.lineTo(q[0],q[1]):X.moveTo(q[0],q[1]));X.stroke();X.setLineDash([])}
 const RC=(x,y,w,h,f,s,lw)=>{if(f){X.fillStyle=f;X.fillRect(x-w/2,y-h/2,w,h)}if(s){X.strokeStyle=s;X.lineWidth=lw||3;X.strokeRect(x-w/2,y-h/2,w,h)}};
@@ -499,23 +533,24 @@ const js=A=>JSON.stringify(A),fl=A=>A.map(r=>[...r].reverse()),fv=A=>[...A].reve
 function gdraw(A,cx,cy,sz){const n=A.length,cs=sz/n;A.forEach((row,r)=>row.forEach((v,c)=>RC(cx+(c-(n-1)/2)*cs,cy+(r-(n-1)/2)*cs,cs,cs,v?['','#d64541','#3a86d8','#f2d14b'][v]:'#fff','#bbb',1)));RC(cx,cy,sz,sz,0,INK,3)}
 
 /* ===== 三种通用题板：选择 / 填数 / 连线 ===== */
-function mkPick(Rn,gen){let r=0,cu=gen(0);
+function mkPick(Rn,gen){let r=0,cu=gen(0),tw=0;
  return{on:false,
- down(p){const o=cu.opts.find(o=>Math.abs(p[0]-o.x)<o.w/2&&Math.abs(p[1]-o.y)<o.h/2);if(!o)return;
-  if(o.ok){beep(700,.08);r++;if(r>=Rn)win();else cu=gen(r)}else{o.sh=14;beep(180,.15)}},
+ down(p){if(tw>0)return;const o=cu.opts.find(o=>Math.abs(p[0]-o.x)<o.w/2&&Math.abs(p[1]-o.y)<o.h/2);if(!o)return;
+  if(o.ok){beep(700,.08);if(r+1>=Rn){r++;win()}else{tw=30;o.hit=1}}else{o.sh=14;beep(180,.15)}},
  move(){},up(){},
- draw(){cu.q();cu.opts.forEach(o=>{const x=o.x+(o.sh>0?(o.sh--%4<2?5:-5):0);RC(x,o.y,o.w,o.h,'#fff',o.sh>0?'#d64541':INK,4);o.g(x,o.y,o.w,o.h)});T((r+1)+' / '+Rn,900,26,22)}}}
-function mkNum(Rn,gen){let r=0,cu,sl=0;const kx=k=>480+(k-5)*72,ld=()=>{cu=gen(r);cu.f.forEach(f=>{f.ok=0;f.v='';f.sh=0});sl=0};ld();
+ draw(){if(tw>0&&--tw===0){r++;cu=gen(r)}cu.q();cu.opts.forEach(o=>{const x=o.x+(o.sh>0?(o.sh--%4<2?5:-5):0);RC(x,o.y,o.w,o.h,o.hit?'#d7f5c6':'#fff',o.sh>0?'#d64541':INK,4);o.g(x,o.y,o.w,o.h)});T(Math.min(r+1,Rn)+' / '+Rn,900,26,22)}}}
+function mkNum(Rn,gen){let r=0,cu,sl=0,tw=0;const kx=k=>480+(k-5)*72,ld=()=>{cu=gen(r);cu.f.forEach(f=>{f.ok=0;f.v='';f.sh=0});sl=0};ld();
  return{on:false,
- down(p){const f=cu.f.findIndex(f=>!f.ok&&Math.abs(p[0]-f.x)<f.w/2+6&&Math.abs(p[1]-f.y)<f.h/2+6);if(f>=0){sl=f;cu.f[f].v='';return}
+ down(p){if(tw>0)return;const f=cu.f.findIndex(f=>!f.ok&&Math.abs(p[0]-f.x)<f.w/2+6&&Math.abs(p[1]-f.y)<f.h/2+6);if(f>=0){sl=f;cu.f[f].v='';return}
   if(p[1]<528)return;const k=Math.round((p[0]-480)/72+5);if(k<0||k>10||Math.abs(p[0]-kx(k))>34)return;const q=cu.f[sl];if(!q||q.ok)return;
   if(k===10){q.v='';return}q.v+=k;
-  if(q.v.length>=String(q.ans).length){if(+q.v===q.ans){q.ok=1;beep(700,.06);sl=cu.f.findIndex(z=>!z.ok);if(sl<0){r++;if(r>=Rn)win();else ld()}}else{q.sh=14;q.v='';beep(180,.15)}}},
+  if(q.v.length>=String(q.ans).length){let g=+q.v===q.ans;if(!g&&cu.sw){const o=cu.f.find(z=>z!==q&&!z.ok&&cu.sw.includes(z.id)&&cu.sw.includes(q.id)&&z.ans===+q.v);if(o){o.ans=q.ans;q.ans=+q.v;g=true}}
+   if(g){q.ok=1;beep(700,.06);sl=cu.f.findIndex(z=>!z.ok);if(sl<0){if(r+1>=Rn){r++;win()}else tw=42}}else{q.sh=14;q.v='';beep(180,.15)}}},
  move(){},up(){},
- draw(){cu.q();cu.f.forEach((f,k)=>{const x=f.x+(f.sh>0?(f.sh--%4<2?5:-5):0),se=k===sl&&!f.ok,bc=se?'#e0a000':INK,fc=f.ok?'#dff5d8':'#fff';
+ draw(){if(tw>0&&--tw===0){r++;ld()}cu.q();cu.f.forEach((f,k)=>{const x=f.x+(f.sh>0?(f.sh--%4<2?5:-5):0),se=k===sl&&!f.ok,bc=se?'#e0a000':INK,fc=f.ok?'#dff5d8':'#fff';
    if(f.c)O(x,f.y,f.w/2,fc,bc,se?7:4);else RC(x,f.y,f.w,f.h,fc,bc,se?7:4);T(f.ok?f.ans:f.v,x,f.y,f.h*.7,f.ok?'#2e8b57':INK)});
   X.fillStyle='rgba(255,255,255,.8)';X.fillRect(0,520,W,80);for(let k=0;k<=10;k++){RC(kx(k),560,62,54,'#ffd23f',INK,4);T(k===10?'⌫':k,kx(k),560,30)}
-  if(Rn>1)T((r+1)+' / '+Rn,900,24,22)}}}
+  if(tw>0)T('✓',480,300,130,'rgba(46,139,87,.8)');if(Rn>1)T(Math.min(r+1,Rn)+' / '+Rn,900,24,22)}}}
 function mkLink(Rn,gen){let r=0,cu,ln=[],dr=null;const ld=()=>{cu=gen(r);ln=[];dr=null};ld();const hit=p=>cu.items.find(o=>d(p,[o.x,o.y])<o.r);
  return{on:false,
  down(p){const o=hit(p);if(o){dr={o,p};this.on=true}},move(p){if(dr)dr.p=p},
@@ -565,8 +600,8 @@ function mkView(i){const m=i<5?3:4;
 const RU=[['🌧️','下雨','☂️','带雨伞'],['☀️','晴天','🕶️','戴太阳镜'],['❄️','下雪','🧤','戴手套'],['🌙','晚上','🛏️','去睡觉'],['🥵','很热','🍦','吃冰淇淋'],['🥶','很冷','🧥','穿外套'],['😴','困了','🧸','抱小熊'],['😢','难过','🤗','抱一抱']],EX=[['⚽','玩皮球'],['🥤','喝水'],['📚','看书']];
 function mkCond(i){const k=[2,2,3,3,4,4,5,5,6,6][i];
  return mkPick(3,r=>{const S=sh(RU).slice(0,k),t=S[ri(k)],rev=i>=5&&r%2===1,cw=Math.min(280,Math.floor(900/k)-10),pool=rev?S.map(s=>[s[0],s[1]]):S.map(s=>[s[2],s[3]]),ans=rev?[t[0],t[1]]:[t[2],t[3]],
-   dis=[...sh(pool.filter(p=>p[0]!==ans[0])),...sh(EX)].slice(0,3),opts=sh([ans,...dis]).map((a,j)=>({x:480+(j-1.5)*210,y:490,w:190,h:130,ok:a===ans,g:(x,y)=>{T(a[0],x,y-18,58);T(a[1],x,y+44,20)}}));
-  return{q(){T('先看规则，再选出正确答案',480,24,26);S.forEach((s,j)=>{const x=480+(j-(k-1)/2)*(cw+10);RC(x,105,cw,130,'#fff0f5','#e0568f',4);T(s[0],x-cw*.22,80,38);T('→',x,80,24);T(s[2],x+cw*.22,80,38);T('如果'+s[1]+'，就'+s[3],x,135,15)});
+   dis=[...sh(pool.filter(p=>p[0]!==ans[0])),...sh(EX)].slice(0,3),opts=sh([ans,...dis]).map((a,j)=>({x:480+(j-1.5)*210,y:490,w:190,h:130,ok:a===ans,g:(x,y)=>{T(a[0],x,y-18,58);T(a[1],x,y+44,20,null,176)}}));
+  return{q(){T('先看规则，再选出正确答案',480,24,26);S.forEach((s,j)=>{const x=480+(j-(k-1)/2)*(cw+10);RC(x,105,cw,130,'#fff0f5','#e0568f',4);T(s[0],x-cw*.22,80,38);T('→',x,80,24);T(s[2],x+cw*.22,80,38);T('如果'+s[1]+'，就'+s[3],x,135,15,null,cw-14)});
    if(rev){T(t[2],480,255,70);T('小兔'+t[3]+'了，今天是（　）？',480,330,30)}else{T(t[0],480,255,70);T('今天'+t[1]+'啦！小兔应该（　）？',480,330,30)}},opts}})}
 /* ===== 5 类比推理 ===== */
 const AP={food:[['🐱','🐟'],['🐰','🥕'],['🐵','🍌'],['🐶','🦴'],['🐻','🍯'],['🐭','🧀']],wear:[['🧦','🦶'],['🧤','✋'],['👓','👀'],['👢','🦵']],trav:[['🚗','🛣️'],['🚢','🌊'],['✈️','☁️'],['🚂','🛤️']]};
@@ -594,7 +629,7 @@ function mkSplit(i){const Tm=[4,5,6,6,7,8,9,10,10,10][i];
   return{q(){T('数一数，把数字填进圈圈里',480,26,26);[1,2].forEach(k=>L([[CI[0][0],CI[0][1]],[CI[k][0],mode<3?BX[k][1]-75:CI[k][1]-34]],4,'#9fd8cf'));
    if(mode<3)BX.forEach((b,k)=>{RC(b[0],b[1],b[2],b[3],'#fff','#9fd8cf',4);frt(v[k],e,b[0],b[1],b[2],b[3])});
    CI.forEach((c,k)=>{if(gv.includes(k)){O(c[0],c[1],32,'#fff','#9fd8cf',4);T(v[k],c[0],c[1],40)}else O(c[0],c[1],34,0,'#9fd8cf',4)})},
-   f:[0,1,2].filter(k=>!gv.includes(k)).map(k=>({x:CI[k][0],y:CI[k][1],w:64,h:64,c:1,ans:v[k]}))}})}
+   sw:[1,2],f:[0,1,2].filter(k=>!gv.includes(k)).map(k=>({id:k,x:CI[k][0],y:CI[k][1],w:64,h:64,c:1,ans:v[k]}))}})}
 /* ===== 9 哪组最多 ===== */
 function mkMost(i){const g=i<5?3:4,mx=[4,5,5,6,6,7,7,8,9,9][i];
  return mkPick(3,r=>{const least=i>=3&&r%2===1,cnt=sh(Array.from({length:mx},(_,k)=>k+1)).slice(0,g),best=least?Math.min(...cnt):Math.max(...cnt),e0=sh(FR),bw=g===3?260:206;
@@ -668,519 +703,25 @@ const ov=$('ov'),sel=$('sel'),pp=$('pp'),gr=$('grid');
 let cur=Math.min(+ls.get('pp3_cur')||0,NL-1),done=new Set(JSON.parse(ls.get('pp3_done')||'[]')),L_=null,lock=true,mode='start';
 const save=()=>{ls.set('pp3_cur',cur);ls.set('pp3_done',JSON.stringify([...done]))};
 pp.width=104;pp.height=104;spr(pp.getContext('2d'),'pig',52,52,8);
-let sd=0;function load(rt){const v=LV[cur];if(!rt)sd=Math.random()*1e9|0;L_=seeded(sd,v.f);$('tip').textContent=L_.tip||v.t;$('title').textContent=L_.ttl||v.n;$('rd').textContent='第 '+(cur+1)+'/'+NL+' 关 ▾';$('st').textContent='★ '+done.size;lock=false}
+let sd=0;function load(rt){const v=LV[cur];if(!rt)sd=Math.random()*1e9|0;L_=seeded(sd,v.f);setT($('tip'),L_.tip||v.t);setT($('title'),L_.ttl||v.n);setT($('rd'),'第 '+(cur+1)+'/'+NL+' 关 ▾');setT($('st'),'★ '+done.size);lock=false}
 function win(){if(lock)return;lock=true;if(L_)L_.on=false;done.add(cur);save();beep(523,.1);setTimeout(()=>beep(784,.2),120);
- $('st').textContent='★ '+done.size;const last=cur===NL-1;mode=last?'end':'next';
- $('oh').textContent=last?NL+' 关全部完成！':'太棒了！';$('op').textContent=last?'小猪拿到了 '+done.size+' 颗星星，小小思考家！':'第 '+(cur+1)+' 关完成，继续加油！';
- $('ob').textContent=last?'从头再玩':'下一关';pp.classList.add('hop');setTimeout(()=>ov.hidden=false,350)}
-$('ob').textContent=cur?'继续第 '+(cur+1)+' 关':'开始玩';
+ setT($('st'),'★ '+done.size);const last=cur===NL-1;mode=last?'end':'next';
+ setT($('oh'),last?NL+' 关全部完成！':'太棒了！');setT($('op'),last?'小猪拿到了 '+done.size+' 颗星星，小小思考家！':'第 '+(cur+1)+' 关完成，继续加油！');
+ setT($('ob'),last?'从头再玩':'下一关');pp.classList.add('hop');setTimeout(()=>ov.hidden=false,350)}
+setT($('ob'),cur?'继续第 '+(cur+1)+' 关':'开始玩');
 $('ob').onclick=()=>{ov.hidden=true;pp.classList.remove('hop');if(mode==='next')cur++;else if(mode==='end')cur=0;mode='play';save();load()};
 LV.forEach((_,k)=>{const b=document.createElement('b');b.textContent=k+1;b.onclick=()=>{cur=k;mode='play';sel.hidden=ov.hidden=true;pp.classList.remove('hop');save();load()};gr.appendChild(b)});
 $('rd').style.cursor='pointer';$('rd').onclick=()=>{[...gr.children].forEach((b,k)=>b.className=k===cur?'cur':done.has(k)?'on':'');sel.hidden=false};
-$('sb').onclick=()=>sel.hidden=true;$('rs').onclick=()=>{if(!L_)return;ov.hidden=sel.hidden=true;pp.classList.remove('hop');mode='play';load(true)};$('st').textContent='★ '+done.size;
+$('sb').onclick=()=>sel.hidden=true;$('rs').onclick=()=>{if(!L_)return;ov.hidden=sel.hidden=true;pp.classList.remove('hop');mode='play';load(true)};setT($('st'),'★ '+done.size);
 function pos(e){const r=C.getBoundingClientRect();return[(e.clientX-r.left)*W/r.width,(e.clientY-r.top)*H/r.height]}
 C.addEventListener('pointerdown',e=>{if(!L_||lock)return;C.setPointerCapture(e.pointerId);L_.down(pos(e))});
 C.addEventListener('pointermove',e=>{if(L_&&!lock&&L_.on)L_.move(pos(e))});
 ['pointerup','pointercancel'].forEach(t=>C.addEventListener(t,e=>{if(L_&&!lock)L_.up(pos(e))}));
-function frame(){if(ACT==='c_'){bg();if(L_)L_.draw()}requestAnimationFrame(frame)}
+function frame(){if(ACT==='c_'){SPQ.length=0;bg();if(L_)L_.draw()}requestAnimationFrame(frame)}
 frame();
 
 })();
-phase(ACT);
+phase(ACT);applyLang('zh');
 </script>
-
- <script data-goatcounter="https://schreibenspiel.goatcounter.com/count"
-        async src="//gc.zgo.at/count.js"></script>
-
- <!-- =====================================================
-      GLOBAL VISITOR STATISTICS
-     Paste this block immediately before </body>
-===================================================== -->
-
-<link
-  rel="stylesheet"
-  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-/>
-
-<style>
-#gc-visitor-button {
-  position: fixed;
-  right: 22px;
-  bottom: 22px;
-  z-index: 99990;
-  border: none;
-  border-radius: 30px;
-  padding: 12px 19px;
-  background: #245b9a;
-  color: white;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  box-shadow: 0 4px 15px #0003;
-  font-family: Arial, sans-serif;
-}
-
-#gc-visitor-button:hover {
-  background: #174477;
-  transform: translateY(-2px);
-}
-
-#gc-visitor-panel {
-  display: none;
-  position: fixed;
-  right: 20px;
-  bottom: 80px;
-  z-index: 99989;
-  width: min(620px, calc(100vw - 30px));
-  max-height: 82vh;
-  overflow-y: auto;
-  background: white;
-  color: #222;
-  border-radius: 16px;
-  box-shadow: 0 8px 35px #0004;
-  font-family: Arial, sans-serif;
-}
-
-#gc-visitor-panel.gc-open {
-  display: block;
-}
-
-.gc-panel-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 17px 20px;
-  border-bottom: 1px solid #eee;
-}
-
-.gc-panel-header strong {
-  font-size: 16px;
-}
-
-#gc-visitor-close {
-  border: none;
-  background: none;
-  font-size: 25px;
-  cursor: pointer;
-  color: #666;
-}
-
-.gc-summary {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 17px 20px;
-  flex-wrap: wrap;
-}
-
-.gc-total {
-  font-size: 29px;
-  font-weight: bold;
-  color: #245b9a;
-}
-
-.gc-summary small {
-  display: block;
-  margin-top: 4px;
-  color: #777;
-  font-size: 11px;
-}
-
-#gc-visitor-map {
-  width: 100%;
-  height: 340px;
-  background: #edf3f7;
-}
-
-.gc-map-note {
-  padding: 12px 20px;
-  color: #777;
-  font-size: 12px;
-}
-
-#gc-visitor-list {
-  padding: 0 20px 18px;
-  font-size: 13px;
-}
-
-.gc-location-row {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 7px 0;
-  border-bottom: 1px solid #eee;
-}
-
-.gc-location-row span:last-child {
-  font-weight: bold;
-  white-space: nowrap;
-}
-
-@media (max-width: 480px) {
-  #gc-visitor-map {
-    height: 280px;
-  }
-}
-</style>
-
-<button id="gc-visitor-button" type="button">
-  🌍 <span id="gc-button-count">...</span>
-</button>
-
-<div id="gc-visitor-panel">
-  <div class="gc-panel-header">
-    <strong>🌍 Buchstaben – Global Visitors</strong>
-    <button id="gc-visitor-close" type="button">×</button>
-  </div>
-
-  <div class="gc-summary">
-    <div>
-      <div class="gc-total" id="gc-total-count">...</div>
-      <small>Total Page Views</small>
-    </div>
-    <div>
-      <div id="gc-country-count" style="font-size:22px;font-weight:bold">...</div>
-      <small>Countries / Regions</small>
-    </div>
-  </div>
-
-  <div id="gc-visitor-map"></div>
-
-  <div class="gc-map-note" id="gc-update-time">
-    Loading statistics...
-  </div>
-
-  <div id="gc-visitor-list"></div>
-</div>
-
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-<script>
-(function () {
-  "use strict";
-
-  // JSON generated automatically by GitHub Actions
-  const DATA_URL = "./public/data/goatcounter-map.json";
-
-  const button = document.getElementById("gc-visitor-button");
-  const panel = document.getElementById("gc-visitor-panel");
-  const closeButton = document.getElementById("gc-visitor-close");
-
-  let map = null;
-  let mapInitialized = false;
-  let markers = [];
-
-  // Country / region coordinates.
-  // These are approximate display positions, not visitor addresses.
-  const COUNTRY_COORDS = {
-    "Germany": [51.16, 10.45],
-    "Deutschland": [51.16, 10.45],
-    "United States": [39.5, -98.35],
-    "United States of America": [39.5, -98.35],
-    "USA": [39.5, -98.35],
-    "China": [35.86, 104.19],
-    "Japan": [36.2, 138.25],
-    "United Kingdom": [55.37, -3.43],
-    "UK": [55.37, -3.43],
-    "France": [46.22, 2.21],
-    "Italy": [41.87, 12.56],
-    "Spain": [40.46, -3.74],
-    "Netherlands": [52.13, 5.29],
-    "Belgium": [50.50, 4.47],
-    "Switzerland": [46.81, 8.22],
-    "Austria": [47.51, 14.55],
-    "Poland": [51.91, 19.14],
-    "Sweden": [60.12, 18.64],
-    "Norway": [60.47, 8.46],
-    "Denmark": [56.26, 9.50],
-    "Finland": [61.92, 25.74],
-    "Portugal": [39.39, -8.22],
-    "Ireland": [53.14, -7.69],
-    "Canada": [56.13, -106.34],
-    "Mexico": [23.63, -102.55],
-    "Brazil": [-14.23, -51.92],
-    "Argentina": [-38.41, -63.61],
-    "India": [20.59, 78.96],
-    "South Korea": [35.90, 127.77],
-    "Korea": [35.90, 127.77],
-    "Taiwan": [23.69, 120.96],
-    "Singapore": [1.35, 103.82],
-    "Australia": [-25.27, 133.77],
-    "New Zealand": [-40.90, 174.88],
-    "Russia": [61.52, 105.31],
-    "Turkey": [38.96, 35.24],
-    "Türkiye": [38.96, 35.24],
-    "Ukraine": [48.37, 31.16],
-    "South Africa": [-30.55, 22.93],
-    "Egypt": [26.82, 30.80],
-    "Thailand": [15.87, 100.99],
-    "Vietnam": [14.05, 108.27],
-    "Indonesia": [-0.78, 113.92],
-    "Malaysia": [4.21, 101.97],
-    "Philippines": [12.87, 121.77],
-    "Pakistan": [30.37, 69.34],
-    "Bangladesh": [23.68, 90.35],
-    "Saudi Arabia": [23.88, 45.07],
-    "United Arab Emirates": [23.42, 53.84],
-    "Israel": [31.04, 34.85],
-    "Greece": [39.07, 21.82],
-    "Czechia": [49.81, 15.47],
-    "Czech Republic": [49.81, 15.47],
-    "Romania": [45.94, 24.96],
-    "Hungary": [47.16, 19.50],
-    "Bulgaria": [42.73, 25.48],
-    "Croatia": [45.10, 15.20],
-    "Serbia": [44.01, 21.00],
-    "Iceland": [64.96, -19.02]
-  };
-
-  function numberFormat(value) {
-    return Number(value || 0).toLocaleString();
-  }
-
-  function getLocationName(item) {
-    return item.country ||
-      item.name ||
-      item.location ||
-      item.country_name ||
-      item.code ||
-      "Unknown";
-  }
-
-  function getLocationViews(item) {
-    return Number(
-      item.pageviews ??
-      item.count ??
-      item.views ??
-      item.total_pageviews ??
-      item.value ??
-      0
-    );
-  }
-
-  function getCoordinates(item) {
-    const lat = Number(item.latitude ?? item.lat);
-    const lon = Number(item.longitude ?? item.lon ?? item.lng);
-
-    if (
-      Number.isFinite(lat) &&
-      Number.isFinite(lon) &&
-      Math.abs(lat) <= 90 &&
-      Math.abs(lon) <= 180
-    ) {
-      return [lat, lon];
-    }
-
-    const name = getLocationName(item);
-    return COUNTRY_COORDS[name] || null;
-  }
-
-  function showPanel() {
-    panel.classList.add("gc-open");
-
-    if (!mapInitialized && window.L) {
-      initializeMap();
-    }
-
-    setTimeout(function () {
-      if (map) map.invalidateSize();
-    }, 150);
-  }
-
-  function hidePanel() {
-    panel.classList.remove("gc-open");
-  }
-
-  button.addEventListener("click", function () {
-    if (panel.classList.contains("gc-open")) {
-      hidePanel();
-    } else {
-      showPanel();
-    }
-  });
-
-  closeButton.addEventListener("click", hidePanel);
-
-  function initializeMap() {
-    map = L.map("gc-visitor-map", {
-      scrollWheelZoom: false
-    }).setView([25, 10], 2);
-
-    L.tileLayer(
-      "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-      {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-        maxZoom: 8
-      }
-    ).addTo(map);
-
-    mapInitialized = true;
-  }
-
-  function updateMap(locations, total) {
-    if (!mapInitialized || !map) return;
-
-    markers.forEach(function (marker) {
-      map.removeLayer(marker);
-    });
-    markers = [];
-
-    locations.forEach(function (item) {
-      const name = getLocationName(item);
-      const views = getLocationViews(item);
-      const coords = getCoordinates(item);
-
-      if (!coords || views <= 0) return;
-
-      const percentage = total > 0
-        ? (views / total * 100).toFixed(1)
-        : "0.0";
-
-      const radius = Math.max(5, Math.min(22, 5 + Math.sqrt(views)));
-
-      const marker = L.circleMarker(coords, {
-        radius: radius,
-        color: "#245b9a",
-        weight: 1.5,
-        fillColor: "#3988cf",
-        fillOpacity: 0.65
-      }).addTo(map);
-
-      marker.bindTooltip(
-        "<strong>" + escapeHTML(name) + "</strong><br>" +
-        "Page views: " + numberFormat(views) + "<br>" +
-        "Share: " + percentage + "%",
-        {
-          direction: "top",
-          sticky: true
-        }
-      );
-
-      markers.push(marker);
-    });
-  }
-
-  function escapeHTML(value) {
-    return String(value).replace(/[&<>"']/g, function (char) {
-      return {
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        '"': "&quot;",
-        "'": "&#39;"
-      }[char];
-    });
-  }
-
-  function updateLocationList(locations, total) {
-    const list = document.getElementById("gc-visitor-list");
-
-    const sorted = locations
-      .map(function (item) {
-        return {
-          name: getLocationName(item),
-          views: getLocationViews(item)
-        };
-      })
-      .filter(function (item) {
-        return item.views > 0;
-      })
-      .sort(function (a, b) {
-        return b.views - a.views;
-      });
-
-    if (!sorted.length) {
-      list.innerHTML =
-        "<p style='color:#888'>No geographic visitor data available yet.</p>";
-      return;
-    }
-
-    list.innerHTML = "<strong>Top locations</strong>";
-
-    sorted.slice(0, 10).forEach(function (item) {
-      const row = document.createElement("div");
-      row.className = "gc-location-row";
-
-      const name = document.createElement("span");
-      name.textContent = item.name;
-
-      const count = document.createElement("span");
-      const share = total > 0
-        ? (item.views / total * 100).toFixed(1)
-        : "0.0";
-
-      count.textContent =
-        numberFormat(item.views) + " (" + share + "%)";
-
-      row.appendChild(name);
-      row.appendChild(count);
-      list.appendChild(row);
-    });
-  }
-
-  async function loadStatistics() {
-    try {
-      const response = await fetch(
-        DATA_URL + "?t=" + Date.now(),
-        { cache: "no-store" }
-      );
-
-      if (!response.ok) {
-        throw new Error("Cannot load statistics JSON: " + response.status);
-      }
-
-      const data = await response.json();
-
-      const total = Number(data.total_pageviews || 0);
-      const locations = Array.isArray(data.locations)
-        ? data.locations
-        : [];
-
-      document.getElementById("gc-button-count").textContent =
-        numberFormat(total);
-
-      document.getElementById("gc-total-count").textContent =
-        numberFormat(total);
-
-      const validLocations = locations.filter(function (item) {
-        return getLocationViews(item) > 0;
-      });
-
-      document.getElementById("gc-country-count").textContent =
-        numberFormat(validLocations.length);
-
-      const generatedAt = data.generated_at
-        ? new Date(data.generated_at).toLocaleString()
-        : "Not available";
-
-      document.getElementById("gc-update-time").textContent =
-        "Last updated: " + generatedAt;
-
-      updateLocationList(locations, total);
-
-      if (panel.classList.contains("gc-open")) {
-        if (!mapInitialized && window.L) initializeMap();
-        updateMap(locations, total);
-      }
-
-    } catch (error) {
-      console.error("Buchstaben visitor statistics:", error);
-
-      document.getElementById("gc-button-count").textContent = "—";
-      document.getElementById("gc-total-count").textContent = "Unavailable";
-      document.getElementById("gc-update-time").textContent =
-        "Statistics could not be loaded.";
-    }
-  }
-
-  loadStatistics();
-
-  // Refresh data every 10 minutes
-  setInterval(loadStatistics, 10 * 60 * 1000);
-
-})();
-</script>
-
-<!-- END buchstaben GLOBAL VISITOR STATISTICS -->
 </body>
 </html>
