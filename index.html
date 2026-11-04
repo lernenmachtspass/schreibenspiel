@@ -688,5 +688,499 @@ frame();
 })();
 phase(ACT);
 </script>
+
+ <script data-goatcounter="https://schreibenspiel.goatcounter.com/count"
+        async src="//gc.zgo.at/count.js"></script>
+
+ <!-- =====================================================
+      GLOBAL VISITOR STATISTICS
+     Paste this block immediately before </body>
+===================================================== -->
+
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+/>
+
+<style>
+#gc-visitor-button {
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  z-index: 99990;
+  border: none;
+  border-radius: 30px;
+  padding: 12px 19px;
+  background: #245b9a;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 15px #0003;
+  font-family: Arial, sans-serif;
+}
+
+#gc-visitor-button:hover {
+  background: #174477;
+  transform: translateY(-2px);
+}
+
+#gc-visitor-panel {
+  display: none;
+  position: fixed;
+  right: 20px;
+  bottom: 80px;
+  z-index: 99989;
+  width: min(620px, calc(100vw - 30px));
+  max-height: 82vh;
+  overflow-y: auto;
+  background: white;
+  color: #222;
+  border-radius: 16px;
+  box-shadow: 0 8px 35px #0004;
+  font-family: Arial, sans-serif;
+}
+
+#gc-visitor-panel.gc-open {
+  display: block;
+}
+
+.gc-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 17px 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.gc-panel-header strong {
+  font-size: 16px;
+}
+
+#gc-visitor-close {
+  border: none;
+  background: none;
+  font-size: 25px;
+  cursor: pointer;
+  color: #666;
+}
+
+.gc-summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 17px 20px;
+  flex-wrap: wrap;
+}
+
+.gc-total {
+  font-size: 29px;
+  font-weight: bold;
+  color: #245b9a;
+}
+
+.gc-summary small {
+  display: block;
+  margin-top: 4px;
+  color: #777;
+  font-size: 11px;
+}
+
+#gc-visitor-map {
+  width: 100%;
+  height: 340px;
+  background: #edf3f7;
+}
+
+.gc-map-note {
+  padding: 12px 20px;
+  color: #777;
+  font-size: 12px;
+}
+
+#gc-visitor-list {
+  padding: 0 20px 18px;
+  font-size: 13px;
+}
+
+.gc-location-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 7px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.gc-location-row span:last-child {
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  #gc-visitor-map {
+    height: 280px;
+  }
+}
+</style>
+
+<button id="gc-visitor-button" type="button">
+  🌍 <span id="gc-button-count">...</span>
+</button>
+
+<div id="gc-visitor-panel">
+  <div class="gc-panel-header">
+    <strong>🌍 Buchstaben – Global Visitors</strong>
+    <button id="gc-visitor-close" type="button">×</button>
+  </div>
+
+  <div class="gc-summary">
+    <div>
+      <div class="gc-total" id="gc-total-count">...</div>
+      <small>Total Page Views</small>
+    </div>
+    <div>
+      <div id="gc-country-count" style="font-size:22px;font-weight:bold">...</div>
+      <small>Countries / Regions</small>
+    </div>
+  </div>
+
+  <div id="gc-visitor-map"></div>
+
+  <div class="gc-map-note" id="gc-update-time">
+    Loading statistics...
+  </div>
+
+  <div id="gc-visitor-list"></div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+(function () {
+  "use strict";
+
+  // JSON generated automatically by GitHub Actions
+  const DATA_URL = "./public/data/goatcounter-map.json";
+
+  const button = document.getElementById("gc-visitor-button");
+  const panel = document.getElementById("gc-visitor-panel");
+  const closeButton = document.getElementById("gc-visitor-close");
+
+  let map = null;
+  let mapInitialized = false;
+  let markers = [];
+
+  // Country / region coordinates.
+  // These are approximate display positions, not visitor addresses.
+  const COUNTRY_COORDS = {
+    "Germany": [51.16, 10.45],
+    "Deutschland": [51.16, 10.45],
+    "United States": [39.5, -98.35],
+    "United States of America": [39.5, -98.35],
+    "USA": [39.5, -98.35],
+    "China": [35.86, 104.19],
+    "Japan": [36.2, 138.25],
+    "United Kingdom": [55.37, -3.43],
+    "UK": [55.37, -3.43],
+    "France": [46.22, 2.21],
+    "Italy": [41.87, 12.56],
+    "Spain": [40.46, -3.74],
+    "Netherlands": [52.13, 5.29],
+    "Belgium": [50.50, 4.47],
+    "Switzerland": [46.81, 8.22],
+    "Austria": [47.51, 14.55],
+    "Poland": [51.91, 19.14],
+    "Sweden": [60.12, 18.64],
+    "Norway": [60.47, 8.46],
+    "Denmark": [56.26, 9.50],
+    "Finland": [61.92, 25.74],
+    "Portugal": [39.39, -8.22],
+    "Ireland": [53.14, -7.69],
+    "Canada": [56.13, -106.34],
+    "Mexico": [23.63, -102.55],
+    "Brazil": [-14.23, -51.92],
+    "Argentina": [-38.41, -63.61],
+    "India": [20.59, 78.96],
+    "South Korea": [35.90, 127.77],
+    "Korea": [35.90, 127.77],
+    "Taiwan": [23.69, 120.96],
+    "Singapore": [1.35, 103.82],
+    "Australia": [-25.27, 133.77],
+    "New Zealand": [-40.90, 174.88],
+    "Russia": [61.52, 105.31],
+    "Turkey": [38.96, 35.24],
+    "Türkiye": [38.96, 35.24],
+    "Ukraine": [48.37, 31.16],
+    "South Africa": [-30.55, 22.93],
+    "Egypt": [26.82, 30.80],
+    "Thailand": [15.87, 100.99],
+    "Vietnam": [14.05, 108.27],
+    "Indonesia": [-0.78, 113.92],
+    "Malaysia": [4.21, 101.97],
+    "Philippines": [12.87, 121.77],
+    "Pakistan": [30.37, 69.34],
+    "Bangladesh": [23.68, 90.35],
+    "Saudi Arabia": [23.88, 45.07],
+    "United Arab Emirates": [23.42, 53.84],
+    "Israel": [31.04, 34.85],
+    "Greece": [39.07, 21.82],
+    "Czechia": [49.81, 15.47],
+    "Czech Republic": [49.81, 15.47],
+    "Romania": [45.94, 24.96],
+    "Hungary": [47.16, 19.50],
+    "Bulgaria": [42.73, 25.48],
+    "Croatia": [45.10, 15.20],
+    "Serbia": [44.01, 21.00],
+    "Iceland": [64.96, -19.02]
+  };
+
+  function numberFormat(value) {
+    return Number(value || 0).toLocaleString();
+  }
+
+  function getLocationName(item) {
+    return item.country ||
+      item.name ||
+      item.location ||
+      item.country_name ||
+      item.code ||
+      "Unknown";
+  }
+
+  function getLocationViews(item) {
+    return Number(
+      item.pageviews ??
+      item.count ??
+      item.views ??
+      item.total_pageviews ??
+      item.value ??
+      0
+    );
+  }
+
+  function getCoordinates(item) {
+    const lat = Number(item.latitude ?? item.lat);
+    const lon = Number(item.longitude ?? item.lon ?? item.lng);
+
+    if (
+      Number.isFinite(lat) &&
+      Number.isFinite(lon) &&
+      Math.abs(lat) <= 90 &&
+      Math.abs(lon) <= 180
+    ) {
+      return [lat, lon];
+    }
+
+    const name = getLocationName(item);
+    return COUNTRY_COORDS[name] || null;
+  }
+
+  function showPanel() {
+    panel.classList.add("gc-open");
+
+    if (!mapInitialized && window.L) {
+      initializeMap();
+    }
+
+    setTimeout(function () {
+      if (map) map.invalidateSize();
+    }, 150);
+  }
+
+  function hidePanel() {
+    panel.classList.remove("gc-open");
+  }
+
+  button.addEventListener("click", function () {
+    if (panel.classList.contains("gc-open")) {
+      hidePanel();
+    } else {
+      showPanel();
+    }
+  });
+
+  closeButton.addEventListener("click", hidePanel);
+
+  function initializeMap() {
+    map = L.map("gc-visitor-map", {
+      scrollWheelZoom: false
+    }).setView([25, 10], 2);
+
+    L.tileLayer(
+      "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+      {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        maxZoom: 8
+      }
+    ).addTo(map);
+
+    mapInitialized = true;
+  }
+
+  function updateMap(locations, total) {
+    if (!mapInitialized || !map) return;
+
+    markers.forEach(function (marker) {
+      map.removeLayer(marker);
+    });
+    markers = [];
+
+    locations.forEach(function (item) {
+      const name = getLocationName(item);
+      const views = getLocationViews(item);
+      const coords = getCoordinates(item);
+
+      if (!coords || views <= 0) return;
+
+      const percentage = total > 0
+        ? (views / total * 100).toFixed(1)
+        : "0.0";
+
+      const radius = Math.max(5, Math.min(22, 5 + Math.sqrt(views)));
+
+      const marker = L.circleMarker(coords, {
+        radius: radius,
+        color: "#245b9a",
+        weight: 1.5,
+        fillColor: "#3988cf",
+        fillOpacity: 0.65
+      }).addTo(map);
+
+      marker.bindTooltip(
+        "<strong>" + escapeHTML(name) + "</strong><br>" +
+        "Page views: " + numberFormat(views) + "<br>" +
+        "Share: " + percentage + "%",
+        {
+          direction: "top",
+          sticky: true
+        }
+      );
+
+      markers.push(marker);
+    });
+  }
+
+  function escapeHTML(value) {
+    return String(value).replace(/[&<>"']/g, function (char) {
+      return {
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      }[char];
+    });
+  }
+
+  function updateLocationList(locations, total) {
+    const list = document.getElementById("gc-visitor-list");
+
+    const sorted = locations
+      .map(function (item) {
+        return {
+          name: getLocationName(item),
+          views: getLocationViews(item)
+        };
+      })
+      .filter(function (item) {
+        return item.views > 0;
+      })
+      .sort(function (a, b) {
+        return b.views - a.views;
+      });
+
+    if (!sorted.length) {
+      list.innerHTML =
+        "<p style='color:#888'>No geographic visitor data available yet.</p>";
+      return;
+    }
+
+    list.innerHTML = "<strong>Top locations</strong>";
+
+    sorted.slice(0, 10).forEach(function (item) {
+      const row = document.createElement("div");
+      row.className = "gc-location-row";
+
+      const name = document.createElement("span");
+      name.textContent = item.name;
+
+      const count = document.createElement("span");
+      const share = total > 0
+        ? (item.views / total * 100).toFixed(1)
+        : "0.0";
+
+      count.textContent =
+        numberFormat(item.views) + " (" + share + "%)";
+
+      row.appendChild(name);
+      row.appendChild(count);
+      list.appendChild(row);
+    });
+  }
+
+  async function loadStatistics() {
+    try {
+      const response = await fetch(
+        DATA_URL + "?t=" + Date.now(),
+        { cache: "no-store" }
+      );
+
+      if (!response.ok) {
+        throw new Error("Cannot load statistics JSON: " + response.status);
+      }
+
+      const data = await response.json();
+
+      const total = Number(data.total_pageviews || 0);
+      const locations = Array.isArray(data.locations)
+        ? data.locations
+        : [];
+
+      document.getElementById("gc-button-count").textContent =
+        numberFormat(total);
+
+      document.getElementById("gc-total-count").textContent =
+        numberFormat(total);
+
+      const validLocations = locations.filter(function (item) {
+        return getLocationViews(item) > 0;
+      });
+
+      document.getElementById("gc-country-count").textContent =
+        numberFormat(validLocations.length);
+
+      const generatedAt = data.generated_at
+        ? new Date(data.generated_at).toLocaleString()
+        : "Not available";
+
+      document.getElementById("gc-update-time").textContent =
+        "Last updated: " + generatedAt;
+
+      updateLocationList(locations, total);
+
+      if (panel.classList.contains("gc-open")) {
+        if (!mapInitialized && window.L) initializeMap();
+        updateMap(locations, total);
+      }
+
+    } catch (error) {
+      console.error("Buchstaben visitor statistics:", error);
+
+      document.getElementById("gc-button-count").textContent = "—";
+      document.getElementById("gc-total-count").textContent = "Unavailable";
+      document.getElementById("gc-update-time").textContent =
+        "Statistics could not be loaded.";
+    }
+  }
+
+  loadStatistics();
+
+  // Refresh data every 10 minutes
+  setInterval(loadStatistics, 10 * 60 * 1000);
+
+})();
+</script>
+
+<!-- END buchstaben GLOBAL VISITOR STATISTICS -->
 </body>
 </html>
