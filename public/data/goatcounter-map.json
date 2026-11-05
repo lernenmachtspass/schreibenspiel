@@ -1,10 +1,16 @@
 {
-  "generated_at": null,
+  "generated_at": "2026-11-05T14:11:45.039982+00:00",
   "site": "schreibenspiel",
   "metric": "pageviews",
-  "total_pageviews": 0,
-  "locations": [],
+  "total_pageviews": 3,
+  "locations": [
+    {
+      "code": "DE",
+      "name": "Germany",
+      "count": 3
+    }
+  ],
   "unmapped_location_names": [],
   "period_start": "2000-01-01T00:00:00Z",
-  "period_end": null
+  "period_end": "2026-11-05T14:00:00+00:00"
 }
