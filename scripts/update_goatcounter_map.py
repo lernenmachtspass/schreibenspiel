@@ -139,7 +139,7 @@ def main() -> None:
     # The API's total endpoint is date-range based; explicitly request the full history.
     end = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0).isoformat()
     test_payload = api_get("me")
-print("GoatCounter API connection successful:", test_payload)
+    print("GoatCounter API connection successful:", test_payload)
     if "total" not in total_payload:
         raise RuntimeError("GoatCounter total response did not contain 'total'.")
 
