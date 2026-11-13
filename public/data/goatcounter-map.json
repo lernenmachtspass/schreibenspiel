@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-10T11:12:54.328229+00:00",
+  "generated_at": "2026-11-13T10:59:17.222612+00:00",
   "site": "schreibenspiel",
   "metric": "pageviews",
   "total_pageviews": 6,
@@ -12,5 +12,5 @@
   ],
   "unmapped_location_names": [],
   "period_start": "2000-01-01T00:00:00Z",
-  "period_end": "2026-11-10T11:00:00+00:00"
+  "period_end": "2026-11-13T10:00:00+00:00"
 }
